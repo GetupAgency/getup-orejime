@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import React from 'react';
 import { render } from '@testing-library/react';
 import { ConsentManager } from './ConsentManager';
 
@@ -19,8 +20,9 @@ describe('ConsentManager', () => {
   });
 
   it("n'initialise qu'une fois malgré un double montage React 18", () => {
-    const { rerender } = render(<ConsentManager config={config} />);
-    rerender(<ConsentManager config={config} />);
+    render(<ConsentManager config={config} />, {
+      wrapper: React.StrictMode
+    });
     expect(initConsent).toHaveBeenCalledTimes(1);
   });
 
