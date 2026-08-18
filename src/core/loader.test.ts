@@ -20,6 +20,20 @@ describe('toOrejimeConfig', () => {
     expect(o.purposes[0].default).toBe(false);
     expect(o.purposes[0].cookies).toHaveLength(2);
   });
+
+  it("n'inclut pas la clé translations quand bannerTitle n'est pas fourni", () => {
+    // Orejime fusionne cette config avec ses traductions par défaut via un
+    // merge qui itère Object.keys(source) : une clé `translations` présente
+    // avec la valeur `undefined` écraserait le titre/description/accept/
+    // decline par défaut et ferait planter le rendu de la bannière. La clé
+    // doit donc être absente, pas juste `undefined`.
+    const bare = resolveConfig({
+      privacyPolicyUrl: '/c',
+      purposes: [{ id: 'analytics', title: 'A', description: 'd', cookies: [], default: false }]
+    });
+    const o = toOrejimeConfig(bare) as Record<string, unknown>;
+    expect('translations' in o).toBe(false);
+  });
 });
 
 describe('loadOrejime', () => {

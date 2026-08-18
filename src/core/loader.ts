@@ -1,11 +1,25 @@
 import type { ResolvedConfig } from './config';
 
+/**
+ * Forme réelle du manager exposé par `window.orejime.manager` (orejime
+ * 3.2.1, `class eV extends eq` dans le bundle minifié). Vérifiée
+ * empiriquement dans un vrai navigateur (Tâche 11, e2e/consent.spec.ts) :
+ * il n'existe ni `confirmed`, ni `purposes`, ni `saveAndApplyConsents` sur
+ * cet objet — seulement `getConsent`, `setConsent`/`setConsents`,
+ * `isDirty`, `needsUpdate`, `acceptAll`, `declineAll`, `getAllConsents`,
+ * `on`/`off`/`emit`. `setConsent` persiste et applique déjà les
+ * conséquences (cookies, événement `update`) en interne — il n'y a pas
+ * d'étape de sauvegarde séparée à appeler. La liste des finalités ne vient
+ * pas non plus du manager : elle vient de `ResolvedConfig.purposes`
+ * (Tâche 1), déjà disponible partout où `OrejimeManager` est utilisé.
+ * `isDirty()` retourne `true` tant qu'il reste des finalités non
+ * explicitement décidées ; l'absence de décision équivaut à « pas encore
+ * confirmé ».
+ */
 export type OrejimeManager = {
-  confirmed: boolean;
-  purposes: { id: string }[];
   getConsent(id: string): boolean;
   setConsent(id: string, value: boolean): void;
-  saveAndApplyConsents(): void;
+  isDirty(): boolean;
   on(event: 'update', cb: () => void): void;
 };
 
@@ -15,9 +29,17 @@ export function toOrejimeConfig(config: ResolvedConfig): object {
   return {
     privacyPolicyUrl: config.privacyPolicyUrl,
     logo: config.ui.logo,
-    translations: config.ui.bannerTitle
-      ? { banner: { title: config.ui.bannerTitle } }
-      : undefined,
+    // Orejime deep-merges cette config avec ses traductions par défaut
+    // (Object.keys(source).forEach(...)) : une clé `translations` présente
+    // avec la valeur `undefined` est tout de même itérée et écrase donc
+    // entièrement l'objet par défaut (title/description/accept/decline...),
+    // ce qui fait planter le rendu de la bannière (`Cannot read properties
+    // of undefined (reading 'banner')`) dès qu'aucun `bannerTitle` n'est
+    // fourni. Omettre la clé plutôt que la mettre à `undefined` laisse le
+    // merge intact. Trouvé via le test E2E de la Tâche 11 (aucun mock, vrai
+    // bundle Orejime) : les tests unitaires de la Tâche 3 ne couvraient que
+    // le cas `bannerTitle` défini.
+    ...(config.ui.bannerTitle ? { translations: { banner: { title: config.ui.bannerTitle } } } : {}),
     cookie: { name: config.cookie.name, duration: config.cookie.duration },
     purposes: config.purposes.map((p) => ({
       id: p.id,
