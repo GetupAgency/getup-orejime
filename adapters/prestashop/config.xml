@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+    <name>getuporejime</name>
+    <displayName><![CDATA[Getup Orejime — Cookie Consent]]></displayName>
+    <version><![CDATA[2.0.0]]></version>
+    <description><![CDATA[Bandeau cookies RGPD avec Google Consent Mode v2, badge scroll-up et thème personnalisable.]]></description>
+    <author><![CDATA[Getup Agency]]></author>
+    <tab><![CDATA[front_office_features]]></tab>
+    <is_configurable>1</is_configurable>
+    <need_instance>0</need_instance>
+    <limited_countries></limited_countries>
+</module>
