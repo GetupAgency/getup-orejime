@@ -23,13 +23,41 @@ jobs:
   # Toute la surface PHP était jusqu'ici non vérifiée par l'automatisation :
   # les tests PHPUnit ne tournaient sur aucun push, et aucun `php -l` non
   # plus, alors que la spec §9 le budgète explicitement.
-  php:
+  #
+  # Deux jobs plutôt qu'un, parce que les deux versions de PHP en jeu ne sont
+  # pas la même chose :
+  #   - le plugin WordPress annonce `Requires PHP: 7.4` et tourne chez des
+  #     clients sur des hébergements anciens : c'est cette version-là qu'il
+  #     faut linter, sinon la promesse de l'en-tête n'est vérifiée par rien ;
+  #   - l'outillage de test (PHPUnit 9.6 via doctrine/instantiator 2.1) exige
+  #     PHP >= 8.4. Il ne tourne jamais chez un client, seulement ici.
+  php-lint:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['7.4', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+      - name: php -l sur les deux adaptateurs
+        run: |
+          find adapters -name vendor -prune -o -name '*.php' -print0 \
+            | xargs -0 -n1 -P4 php -l
+
+  php-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          # >= 8.4 : contrainte de doctrine/instantiator 2.1, verrouillée dans
+          # adapters/wordpress/composer.lock. Sans rapport avec la version de
+          # PHP que le plugin supporte en production (voir php-lint).
+          php-version: '8.4'
           coverage: none
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
@@ -39,11 +67,6 @@ jobs:
       # les adaptateurs : il doit échouer sans dépendre du job JS.
       - name: Script de phase 1 — source unique
         run: node scripts/check-consent-defaults.mjs
-
-      - name: php -l sur les deux adaptateurs
-        run: |
-          find adapters -name vendor -prune -o -name '*.php' -print0 \
-            | xargs -0 -n1 -P4 php -l
 
       - name: Dépendances PHP (adaptateur WordPress)
         run: composer install --no-interaction --prefer-dist
