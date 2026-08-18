@@ -2607,7 +2607,7 @@ Attendu : les deux zips sont attachés et téléchargeables.
 
 ## Après ce plan
 
-**Chantier 2 — migration de `getup-2K26`**, à planifier une fois la v2.0.0 publiée. Il consiste à installer `github:GetupAgency/getup-consent#v2.0.0`, remplacer les ~300 lignes de `<Script>` de `src/app/layout.tsx` par `consentDefaultsScript()` en phase 1 et `<ConsentManager />` en phase 2, supprimer `public/orejime/`, retirer les deux règles `.orejime-Banner` de `src/design-system/main.scss`, et **corriger au passage la régression de conformité du constat 3** — c'est ce chantier qui la referme réellement en production.
+**Chantier 2 — migration de `getup-2K26`**, à planifier une fois la v2.0.0 publiée. Il consiste à installer `github:GetupAgency/getup-orejime#v2.0.0`, remplacer les ~300 lignes de `<Script>` de `src/app/layout.tsx` par `consentDefaultsScript()` en phase 1 et `<ConsentManager />` en phase 2, supprimer `public/orejime/`, retirer les deux règles `.orejime-Banner` de `src/design-system/main.scss`, et **corriger au passage la régression de conformité du constat 3** — c'est ce chantier qui la referme réellement en production.
 
 Ses étapes dépendent de l'API effectivement publiée : elles seront écrites après coup, pas maintenant.
 

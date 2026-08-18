@@ -177,7 +177,7 @@ Un tag `v2.0.0` déclenche la CI :
 
 Orejime est sous **BSD-3-Clause** (le code Getup est en MIT). Sa notice de copyright et son disclaimer doivent être embarqués dans chaque zip redistribué — obligation de la licence, à traiter dans `build-zips.mjs`.
 
-Le consommateur Next installe via `npm i github:GetupAgency/getup-consent#v2.0.0` ; npm exécute le script `prepare`, qui build. Aucun registre, aucun compte.
+Le consommateur Next installe via `npm i github:GetupAgency/getup-orejime#v2.0.0` ; npm exécute le script `prepare`, qui build. Aucun registre, aucun compte.
 
 ## 9. Tests
 
