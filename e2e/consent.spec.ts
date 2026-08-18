@@ -108,6 +108,58 @@ test('« OK pour moi » déclenche les trackers et accorde le consentement', asy
 
 /* ─────────── Matrice de configuration ─────────── */
 
+/**
+ * Régression critique : `.orejime-Banner { display: none }` était appliqué
+ * sans condition par le thème, alors qu'Orejime n'émet jamais de modificateur
+ * `orejime-Banner--show`. Seuls badge.ts (« En savoir plus ») et openBanner()
+ * posent cette classe. Avec `ui.badge: false` — le défaut de l'adaptateur
+ * WordPress quand l'option est absente — plus aucune interface de
+ * consentement n'était atteignable : le visiteur ne pouvait ni accepter, ni
+ * refuser, et n'était pas informé.
+ */
+test('avec ui.badge: false, une interface de consentement reste visible (?badge=0)', async ({ page }) => {
+  await page.goto('/?badge=0');
+
+  await expect(page.locator('.getup-rgpd-badge')).toHaveCount(0);
+  await expect(page.locator('.orejime-Banner')).toBeVisible();
+  await expect(page.locator('.orejime-Banner-saveButton')).toBeVisible();
+  await expect(page.locator('.orejime-Banner-declineButton')).toBeVisible();
+});
+
+test('sans badge, refuser depuis la bannière ne déclenche aucun tracker (?badge=0&phase1=1)', async ({ page }) => {
+  const hits = watchTrackers(page);
+  await page.goto('/?badge=0&phase1=1');
+
+  await expect(page.locator('.orejime-Banner-declineButton')).toBeVisible();
+  await page.locator('.orejime-Banner-declineButton').click();
+  await page.waitForTimeout(2000);
+  expect(hits).toEqual([]);
+});
+
+test('sans badge, accepter depuis la bannière accorde bien le consentement (?badge=0&phase1=1)', async ({ page }) => {
+  const hits = watchTrackers(page);
+  await page.goto('/?badge=0&phase1=1');
+
+  await expect(page.locator('.orejime-Banner-saveButton')).toBeVisible();
+  await page.locator('.orejime-Banner-saveButton').click();
+
+  await expect.poll(() => hits.some((u) => u.includes('googletagmanager'))).toBe(true);
+  await expect.poll(() => hits.some((u) => u.includes('smartlook'))).toBe(true);
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const dl = (window as unknown as { dataLayer: unknown[] }).dataLayer ?? [];
+        return dl.some((e) => {
+          const args = e as Record<number, unknown>;
+          return Object.prototype.toString.call(e) === '[object Arguments]' &&
+                 args[0] === 'consent' && args[1] === 'update' &&
+                 (args[2] as Record<string, string>).analytics_storage === 'granted';
+        });
+      })
+    )
+    .toBe(true);
+});
+
 test('le correctif SEO H1→P s\'applique au vrai markup Orejime (?title=1)', async ({ page }) => {
   await page.goto('/?title=1');
   await expect(page.locator('.orejime-Banner-title')).toHaveText('Cookies maison');

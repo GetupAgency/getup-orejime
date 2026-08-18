@@ -3,10 +3,23 @@
    Midnight Emerald design system
    ═══════════════════════════════════════════ */
 
-/* Hidden by default; Orejime toggles --show to reveal it. Lives here
-   (not in a site's own stylesheet) so the rule travels with the theme. */
-.orejime-Banner { display: none !important; }
-.orejime-Banner.orejime-Banner--show { display: block !important; }
+/* Masquage de la bannière — MODE BADGE UNIQUEMENT.
+
+   Orejime n'émet aucun modificateur `orejime-Banner--*` : la classe `--show`
+   n'est jamais posée que par le badge RGPD (« En savoir plus », src/core/
+   badge.ts) ou par openBanner() (src/core/index.ts). Appliquée sans
+   condition, cette règle rendait donc toute interface de consentement
+   inatteignable dès que `ui.badge` valait false — le visiteur ne pouvait ni
+   accepter ni refuser, et n'était jamais informé.
+
+   La classe `getup-consent--badge-mode` est posée sur <html> par initConsent
+   quand, et seulement quand, `ui.badge` est vrai. Hors mode badge, la
+   bannière Orejime s'affiche normalement : c'est la seule interface.
+
+   La règle vit ici (et non dans la feuille d'un site) pour voyager avec le
+   thème. */
+.getup-consent--badge-mode .orejime-Banner { display: none !important; }
+.getup-consent--badge-mode .orejime-Banner.orejime-Banner--show { display: block !important; }
 
 @font-face {
   font-family: 'Playfair Display';
@@ -465,8 +478,9 @@
    RGPD Badge — scroll-up mini consent badge
    ═══════════════════════════════════════════════ */
 
-/* Force-show banner when "En savoir plus" is clicked */
-.orejime-Banner.orejime-Banner--show {
+/* Force-show banner when "En savoir plus" is clicked (mode badge uniquement :
+   hors mode badge la bannière n'est jamais masquée, cf. en-tête du fichier) */
+.getup-consent--badge-mode .orejime-Banner.orejime-Banner--show {
   display: block !important;
 }
 

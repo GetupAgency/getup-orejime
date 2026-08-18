@@ -98,6 +98,31 @@ describe('initConsent', () => {
   });
 
   /**
+   * Le thème ne masque la bannière Orejime que sous
+   * `.getup-consent--badge-mode`. Si initConsent ne posait pas cette classe,
+   * le badge et la bannière s'afficheraient tous les deux ; s'il la posait
+   * hors mode badge, plus aucune interface ne serait atteignable (la
+   * régression critique : Orejime n'émet jamais `orejime-Banner--show`).
+   */
+  it('marque le mode badge sur <html> quand ui.badge est vrai', async () => {
+    const p = initConsent({ ...config, ui: { badge: true } });
+    // Posée avant même la résolution du script : la bannière ne doit jamais
+    // être peinte en mode badge.
+    expect(document.documentElement.classList.contains('getup-consent--badge-mode')).toBe(true);
+    resolveScript(stubManager());
+    await p;
+    expect(document.documentElement.classList.contains('getup-consent--badge-mode')).toBe(true);
+  });
+
+  it('ne marque pas le mode badge quand ui.badge est faux', async () => {
+    document.documentElement.classList.add('getup-consent--badge-mode');
+    const p = initConsent({ ...config, ui: { badge: false } });
+    resolveScript(stubManager());
+    await p;
+    expect(document.documentElement.classList.contains('getup-consent--badge-mode')).toBe(false);
+  });
+
+  /**
    * `on` n'est pas le seul chemin qui sort du try/catch d'initConsent. Deux
    * callbacks enregistrés par le module atteignent le manager brut depuis
    * l'extérieur :

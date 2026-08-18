@@ -5,6 +5,14 @@ import { attachTrackers } from './trackers';
 import { mountBadge } from './badge';
 import { fixBannerHeading, attachExitAnimations } from './a11y';
 
+/**
+ * Posée sur <html> quand `ui.badge` est vrai. Le thème s'en sert pour masquer
+ * la bannière Orejime, que le badge remplace : voir l'en-tête de
+ * src/theme/tokens.css. Sans mode badge, la bannière est la seule interface
+ * de consentement et ne doit jamais être masquée.
+ */
+const BADGE_MODE_CLASS = 'getup-consent--badge-mode';
+
 export type ConsentApi = {
   isInert: boolean;
   getConsent(purposeId: string): boolean;
@@ -88,6 +96,11 @@ export async function initConsent(input: ConsentConfig): Promise<ConsentApi> {
 
   try {
     const config = resolveConfig(input);
+
+    // Avant le chargement d'Orejime, donc avant que la bannière ne soit
+    // rendue : en mode badge elle ne doit jamais être peinte, même un instant.
+    document.documentElement.classList.toggle(BADGE_MODE_CLASS, config.ui.badge);
+
     const { manager: rawManager } = await loadOrejime(config);
     const manager = guardManager(rawManager);
 
