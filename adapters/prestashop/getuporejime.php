@@ -11,8 +11,6 @@ if (!defined('_PS_VERSION_')) { exit; }
 
 class GetupOrejime extends Module
 {
-    private const SIGNALS = ['analytics_storage', 'ad_storage', 'ad_user_data', 'ad_personalization'];
-
     public function __construct()
     {
         $this->name = 'getuporejime';
@@ -224,21 +222,32 @@ class GetupOrejime extends Module
 
     /* ─────────────── Front-office hook ─────────────── */
 
+    /**
+     * Corps du script de phase 1, lu depuis l'artefact généré au build.
+     *
+     * Source unique : consentDefaultsScript() (src/core/consent-mode.ts),
+     * émise dans views/dist/consent-defaults.php par
+     * scripts/emit-consent-defaults.mjs. Le module ne contient aucune logique
+     * de consentement (docs/design.md §3) et ne redit pas la liste des
+     * signaux : la garde scripts/check-consent-defaults.mjs échoue si une
+     * copie réapparaît ici.
+     */
+    private function consentDefaultsScript(): string
+    {
+        $file = __DIR__ . '/views/dist/consent-defaults.php';
+
+        return is_readable($file) ? (string) require $file : '';
+    }
+
     /** Phase 1 puis phase 2, dans cet ordre. */
     public function hookDisplayHeader(): string
     {
-        $denied = implode(',', array_map(
-            static fn($s) => $s . ':"denied"',
-            self::SIGNALS
-        ));
-
         $base = $this->_path . 'views/dist';
 
-        $out = '<script id="getup-orejime-consent-defaults">'
-             . 'window.dataLayer=window.dataLayer||[];'
-             . 'function gtag(){dataLayer.push(arguments);}'
-             . 'gtag("consent","default",{' . $denied . ',wait_for_update:500});'
-             . '</script>';
+        $defaults = $this->consentDefaultsScript();
+        $out = $defaults === ''
+            ? ''
+            : '<script id="getup-orejime-consent-defaults">' . $defaults . '</script>';
 
         $out .= '<link rel="stylesheet" href="' . $base . '/theme/tokens.css">';
         $out .= '<link rel="stylesheet" href="' . $base . '/theme/presets/midnight-emerald.css">';

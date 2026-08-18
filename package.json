@@ -19,7 +19,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "rm -rf dist && tsup && tsc -p tsconfig.build.json",
+    "build": "rm -rf dist && tsup && tsc -p tsconfig.build.json && node scripts/emit-consent-defaults.mjs",
     "prepare": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",

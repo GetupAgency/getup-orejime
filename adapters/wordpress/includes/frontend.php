@@ -7,16 +7,35 @@ add_action('wp_head', 'getup_orejime_consent_defaults', 1);
 add_action('wp_enqueue_scripts', 'getup_orejime_enqueue', 99);
 add_action('wp_footer', 'getup_orejime_print_config', 5);
 
+/**
+ * Corps du script de phase 1, lu depuis l'artefact généré au build.
+ *
+ * Source unique : consentDefaultsScript() (src/core/consent-mode.ts), émise
+ * dans dist/consent-defaults.php par scripts/emit-consent-defaults.mjs.
+ * L'adaptateur ne contient aucune logique de consentement (docs/design.md §3)
+ * et ne redit pas la liste des signaux : la garde
+ * scripts/check-consent-defaults.mjs échoue si une copie réapparaît ici.
+ *
+ * Retourne une chaîne vide si l'artefact est absent — un plugin sans dist/
+ * n'a de toute façon ni bundle ni thème ; mieux vaut ne rien émettre qu'un
+ * fatal sur le site hôte.
+ */
+function getup_orejime_consent_defaults_script(): string
+{
+    $file = GETUP_OREJIME_DIR . 'dist/consent-defaults.php';
+
+    return is_readable($file) ? (string) require $file : '';
+}
+
 /** Phase 1 — doit précéder toute balise de mesure. */
 function getup_orejime_consent_defaults(): void
 {
-    $signals = ['analytics_storage', 'ad_storage', 'ad_user_data', 'ad_personalization'];
-    $denied  = implode(',', array_map(static fn($s) => $s . ':"denied"', $signals));
-    echo '<script id="getup-orejime-consent-defaults">'
-       . 'window.dataLayer=window.dataLayer||[];'
-       . 'function gtag(){dataLayer.push(arguments);}'
-       . 'gtag("consent","default",{' . $denied . ',wait_for_update:500});'
-       . '</script>';
+    $script = getup_orejime_consent_defaults_script();
+    if ($script === '') {
+        return;
+    }
+
+    echo '<script id="getup-orejime-consent-defaults">' . $script . '</script>';
 }
 
 function getup_orejime_enqueue(): void
