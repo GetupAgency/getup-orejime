@@ -67,4 +67,33 @@ describe('loadOrejime', () => {
     loadOrejime(config);
     expect(document.head.querySelectorAll('script')).toHaveLength(1);
   });
+
+  it('peut réessayer après un échec de chargement du script', async () => {
+    const p1 = loadOrejime(config);
+    const script1 = document.head.querySelector('script') as HTMLScriptElement;
+    script1.dispatchEvent(new Event('error'));
+    await expect(p1).rejects.toThrow(/chargement/i);
+
+    // Simuler une retentative après l'erreur
+    const p2 = loadOrejime(config);
+    const scripts = document.head.querySelectorAll('script');
+    const script2 = scripts[scripts.length - 1] as HTMLScriptElement;
+    (window as any).orejime = { manager: {} };
+    script2.dispatchEvent(new Event('load'));
+    await expect(p2).resolves.toEqual({ manager: {} });
+  });
+
+  it('n\'ajoute pas de feuille de style dupliquée lors d\'une retentative', async () => {
+    const p1 = loadOrejime(config);
+    const script1 = document.head.querySelector('script') as HTMLScriptElement;
+    script1.dispatchEvent(new Event('error'));
+    await expect(p1).rejects.toThrow(/chargement/i);
+    const linksAfterError = [...document.head.querySelectorAll('link')].map((l) => l.getAttribute('href'));
+    expect(linksAfterError).toContain('/assets/orejime/orejime-standard.css');
+
+    // Retentative
+    const p2 = loadOrejime(config);
+    const linksAfterRetry = [...document.head.querySelectorAll('link')].map((l) => l.getAttribute('href'));
+    expect(linksAfterRetry.filter((h) => h === '/assets/orejime/orejime-standard.css')).toHaveLength(1);
+  });
 });

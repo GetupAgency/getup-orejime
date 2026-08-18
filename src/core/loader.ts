@@ -39,10 +39,17 @@ export function loadOrejime(config: ResolvedConfig): Promise<OrejimeGlobal> {
 
   w.orejimeConfig = toOrejimeConfig(config);
 
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = `${base}/orejime-standard.css`;
-  document.head.appendChild(link);
+  // Inject stylesheet only if not already present
+  const stylesheetHref = `${base}/orejime-standard.css`;
+  const isStylesheetPresent = [...document.head.querySelectorAll('link')].some(
+    (link) => link.getAttribute('href') === stylesheetHref
+  );
+  if (!isStylesheetPresent) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = stylesheetHref;
+    document.head.appendChild(link);
+  }
 
   pending = new Promise<OrejimeGlobal>((resolve, reject) => {
     const script = document.createElement('script');
@@ -50,12 +57,14 @@ export function loadOrejime(config: ResolvedConfig): Promise<OrejimeGlobal> {
     script.async = true;
     script.addEventListener('load', () => {
       if (!w.orejime) {
+        pending = null;
         reject(new Error('[getup-consent] Script chargé mais window.orejime absent.'));
         return;
       }
       resolve(w.orejime);
     });
     script.addEventListener('error', () => {
+      pending = null;
       reject(new Error('[getup-consent] Échec de chargement du script Orejime.'));
     });
     document.head.appendChild(script);
