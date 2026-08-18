@@ -2,15 +2,17 @@ const DURATIONS = { accept: 550, decline: 400 } as const;
 
 /**
  * Orejime rend le titre de sa bannière en <h1>, ce qui crée un second H1
- * sur toutes les pages. On le remplace par un <p> de même classe.
+ * sur toutes les pages. On le remplace par un <p> de même classe et attributs.
  */
 export function fixBannerHeading(): void {
   const banner = document.querySelector('.orejime-Banner');
   const h1 = banner?.querySelector('h1');
   if (!h1) return;
   const p = document.createElement('p');
-  p.className = h1.className;
   p.textContent = h1.textContent;
+  for (const attr of h1.attributes) {
+    p.setAttribute(attr.name, attr.value);
+  }
   h1.replaceWith(p);
 }
 

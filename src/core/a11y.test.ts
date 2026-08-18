@@ -19,6 +19,17 @@ describe('fixBannerHeading', () => {
     expect(p.textContent).toBe('Cookies maison');
   });
 
+  it('préserve les attributs du h1 (id et aria-*)', () => {
+    document.body.innerHTML = `
+      <div class="orejime-Banner" role="dialog" aria-labelledby="orejime-Banner-title">
+        <h1 class="orejime-Banner-title" id="orejime-Banner-title" data-test="value">Cookies maison</h1>
+      </div>`;
+    fixBannerHeading();
+    const p = document.querySelector('p.orejime-Banner-title')!;
+    expect(p.id).toBe('orejime-Banner-title');
+    expect(p.getAttribute('data-test')).toBe('value');
+  });
+
   it('est sans effet si la bannière na pas de h1', () => {
     document.body.innerHTML = '<div class="orejime-Banner"></div>';
     expect(() => fixBannerHeading()).not.toThrow();
