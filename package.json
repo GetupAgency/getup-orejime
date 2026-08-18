@@ -22,7 +22,8 @@
     "build": "rm -rf dist && tsup && tsc -p tsconfig.build.json",
     "prepare": "npm run build",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "zips": "npm run build && node scripts/build-zips.mjs"
   },
   "dependencies": {
     "orejime": "^3.1.0"
