@@ -42,28 +42,6 @@ export function mountBadge(
   root.append(label, actions);
   document.body.appendChild(root);
 
-  const remove = () => {
-    root.classList.add('getup-rgpd-badge--leaving');
-    root.classList.remove('getup-rgpd-badge--visible');
-    setTimeout(() => root.remove(), 500);
-  };
-
-  const setAll = (value: boolean) => {
-    manager.purposes.forEach((p) => manager.setConsent(p.id, value));
-    manager.saveAndApplyConsents();
-    remove();
-  };
-
-  label.addEventListener('click', () => {
-    root.classList.toggle('getup-rgpd-badge--expanded');
-  });
-  accept.addEventListener('click', () => setAll(true));
-  decline.addEventListener('click', () => setAll(false));
-  more.addEventListener('click', () => {
-    document.querySelector('.orejime-Banner')?.classList.add('orejime-Banner--show');
-    remove();
-  });
-
   let lastY = window.scrollY;
   let visible = false;
   let ticking = false;
@@ -85,10 +63,39 @@ export function mountBadge(
   };
   window.addEventListener('scroll', onScroll, { passive: true });
 
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    window.removeEventListener('scroll', onScroll);
+    root.remove();
+  };
+
+  const remove = () => {
+    root.classList.add('getup-rgpd-badge--leaving');
+    root.classList.remove('getup-rgpd-badge--visible');
+    setTimeout(() => cleanup(), 500);
+  };
+
+  const setAll = (value: boolean) => {
+    manager.purposes.forEach((p) => manager.setConsent(p.id, value));
+    manager.saveAndApplyConsents();
+    remove();
+  };
+
+  label.addEventListener('click', () => {
+    root.classList.toggle('getup-rgpd-badge--expanded');
+  });
+  accept.addEventListener('click', () => setAll(true));
+  decline.addEventListener('click', () => setAll(false));
+  more.addEventListener('click', () => {
+    document.querySelector('.orejime-Banner')?.classList.add('orejime-Banner--show');
+    remove();
+  });
+
   return {
     destroy() {
-      window.removeEventListener('scroll', onScroll);
-      root.remove();
+      cleanup();
     }
   };
 }

@@ -83,4 +83,55 @@ describe('mountBadge', () => {
     h.destroy();
     expect(badge()).toBeNull();
   });
+
+  it('retire le listener scroll après avoir cliqué accept', async () => {
+    vi.useFakeTimers();
+    try {
+      const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+      const m = fakeManager();
+      mountBadge(config, m);
+      btn('accept').click();
+      await vi.runAllTimersAsync();
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('scroll', expect.any(Function));
+      removeEventListenerSpy.mockRestore();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('retire le listener scroll après avoir cliqué decline', async () => {
+    vi.useFakeTimers();
+    try {
+      const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+      const m = fakeManager();
+      mountBadge(config, m);
+      btn('decline').click();
+      await vi.runAllTimersAsync();
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('scroll', expect.any(Function));
+      removeEventListenerSpy.mockRestore();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('retire le listener scroll après avoir cliqué plus', async () => {
+    vi.useFakeTimers();
+    try {
+      const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+      const m = fakeManager();
+      mountBadge(config, m);
+      btn('more').click();
+      await vi.runAllTimersAsync();
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('scroll', expect.any(Function));
+      removeEventListenerSpy.mockRestore();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('destroy est idempotent', () => {
+    const h = mountBadge(config, fakeManager());
+    h.destroy();
+    expect(() => h.destroy()).not.toThrow();
+  });
 });
