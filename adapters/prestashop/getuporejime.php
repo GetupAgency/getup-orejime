@@ -29,10 +29,38 @@ class GetupOrejime extends Module
 
     /* ─────────────── Install / Uninstall ─────────────── */
 
+    /**
+     * Place le module en tête du hook displayHeader.
+     *
+     * `registerHook` ajoute en dernière position. Or une boutique PrestaShop
+     * par défaut embarque déjà ps_googleanalytics sur ce même hook : notre
+     * script de phase 1 sortirait donc APRÈS lui, et les défauts
+     * `denied` de Consent Mode arriveraient trop tard pour la balise qu'ils
+     * doivent encadrer.
+     *
+     * WordPress épingle l'équivalent avec add_action(..., 1) ; PrestaShop n'a
+     * pas de priorité de hook, seulement un ordre modifiable, d'où ce
+     * repositionnement explicite. Le marchand peut toujours le changer dans
+     * Modules > Positions, mais le défaut doit être correct.
+     */
+    private function moveToFrontOfHeader(): bool
+    {
+        $idHook = (int) Hook::getIdByName('displayHeader');
+        if ($idHook === 0) {
+            return true;
+        }
+        // way = 0 : vers le haut. Un échec ne doit pas faire échouer
+        // l'installation : le module reste fonctionnel, simplement mal placé.
+        $this->updatePosition($idHook, 0, 1);
+
+        return true;
+    }
+
     public function install(): bool
     {
         return parent::install()
             && $this->registerHook('displayHeader')
+            && $this->moveToFrontOfHeader()
             && Configuration::updateValue('GETUPOREJIME_PRIVACY_URL', '/content/2-mentions-legales')
             && Configuration::updateValue('GETUPOREJIME_COOKIE_NAME', 'getup-cookies')
             && Configuration::updateValue('GETUPOREJIME_COOKIE_DURATION', 365)
