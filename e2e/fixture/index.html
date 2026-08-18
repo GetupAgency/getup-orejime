@@ -3,20 +3,66 @@
   <head>
     <meta charset="utf-8" />
     <title>Fixture consentement</title>
-    <script type="application/json" id="getup-consent-config">
-      {
-        "privacyPolicyUrl": "/confidentialite",
-        "assetsBaseUrl": "/vendor/orejime",
-        "trackers": {
-          "gtm": { "id": "G-FIXTURE", "lazy": false },
-          "smartlook": { "key": "fixture-key" }
-        },
-        "purposes": [
-          { "id": "analytics", "title": "Analytics", "description": "d", "cookies": ["_ga"], "default": false },
-          { "id": "advertising", "title": "Publicité", "description": "d", "cookies": ["_fbp"], "default": false }
-        ]
+
+    <!--
+      Fixture paramétrable par query-string. Les deux régressions critiques
+      trouvées en revue finale vivaient dans les angles morts de l'ancienne
+      fixture : un seul chemin heureux, sans script de phase 1, toujours en
+      mode badge, jamais de bannerTitle (donc `fixBannerHeading` jamais
+      confronté au vrai markup, Orejime ne rendant son <h1> que si un titre de
+      bannière est configuré).
+
+        ?badge=0    désactive le badge RGPD (la bannière Orejime doit alors
+                    rester la seule interface, et rester atteignable)
+        ?title=1    configure ui.bannerTitle (Orejime rend alors son <h1>)
+        ?fixh1=0    désactive le correctif SEO H1→P (témoin : Orejime rend
+                    alors bien un <h1> dans la bannière)
+        ?phase1=1   inline le script de phase 1 (Consent Mode « denied »)
+                    depuis l'artefact de build partagé — la même chaîne que
+                    celle servie par les deux adaptateurs PHP.
+    -->
+    <script>
+      window.__fixtureParams = new URLSearchParams(location.search);
+      if (window.__fixtureParams.get('phase1') === '1') {
+        // document.write pendant l'analyse du document : le script est chargé
+        // et exécuté de façon synchrone, avant toute autre balise — c'est la
+        // contrainte de la phase 1 (docs/design.md §4).
+        document.write('<script src="/consent-defaults.js"><\/script>');
       }
     </script>
+
+    <script type="application/json" id="getup-consent-config"></script>
+    <script>
+      (function () {
+        var params = window.__fixtureParams;
+        var config = {
+          privacyPolicyUrl: '/confidentialite',
+          assetsBaseUrl: '/vendor/orejime',
+          trackers: {
+            gtm: { id: 'G-FIXTURE', lazy: false },
+            smartlook: { key: 'fixture-key' }
+          },
+          ui: {},
+          purposes: [
+            { id: 'analytics', title: 'Analytics', description: 'd', cookies: ['_ga'], default: false },
+            { id: 'advertising', title: 'Publicité', description: 'd', cookies: ['_fbp'], default: false }
+          ]
+        };
+
+        if (params.get('badge') === '0') {
+          config.ui.badge = false;
+        }
+        if (params.get('title') === '1') {
+          config.ui.bannerTitle = 'Cookies maison';
+        }
+        if (params.get('fixh1') === '0') {
+          config.ui.fixSeoH1 = false;
+        }
+
+        document.getElementById('getup-consent-config').textContent = JSON.stringify(config);
+      })();
+    </script>
+
     <link rel="stylesheet" href="/theme/tokens.css" />
     <link rel="stylesheet" href="/theme/presets/midnight-emerald.css" />
     <script src="/getup-consent.iife.js" defer></script>
