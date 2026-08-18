@@ -133,6 +133,49 @@ describe('attachTrackers', () => {
     expect(srcs().filter((s) => s.includes('googletagmanager'))).toHaveLength(1);
   });
 
+  // Fuite de révocation GTM (trouvée en revue) : une fois arm() déclenché
+  // par un octroi de consentement, `armed` reste vrai en permanence — le
+  // timer de 5s et les écouteurs d'interaction restent actifs même si le
+  // visiteur refuse ensuite via le badge, et load() n'a jamais revérifié le
+  // consentement au moment d'injecter le script. Smartlook n'a pas cette
+  // fenêtre car son check() revérifie à chaque update et charge sur le même
+  // tick que l'octroi ; ce sont les chemins différés de GTM (timer,
+  // écouteurs d'interaction) qui l'ouvrent.
+  it('ne charge pas GTM si le consentement est révoqué avant lexpiration du délai (lazy: true)', () => {
+    const m = fakeManager({ analytics: false });
+    attachTrackers(config, m);
+    m.setConsent('analytics', true);
+    m.fire();
+    m.setConsent('analytics', false);
+    m.fire();
+    vi.advanceTimersByTime(5000);
+    expect(srcs().some((s) => s.includes('googletagmanager'))).toBe(false);
+  });
+
+  it('ne charge pas GTM si le consentement est révoqué avant une interaction (lazy: true)', () => {
+    const m = fakeManager({ analytics: false });
+    attachTrackers(config, m);
+    m.setConsent('analytics', true);
+    m.fire();
+    m.setConsent('analytics', false);
+    m.fire();
+    document.dispatchEvent(new Event('scroll'));
+    expect(srcs().some((s) => s.includes('googletagmanager'))).toBe(false);
+  });
+
+  it('charge GTM une seule fois lors dune séquence accorder → révoquer → accorder (lazy: true)', () => {
+    const m = fakeManager({ analytics: false });
+    attachTrackers(config, m);
+    m.setConsent('analytics', true);
+    m.fire();
+    m.setConsent('analytics', false);
+    m.fire();
+    m.setConsent('analytics', true);
+    m.fire();
+    vi.advanceTimersByTime(5000);
+    expect(srcs().filter((s) => s.includes('googletagmanager'))).toHaveLength(1);
+  });
+
   it('ne charge rien si aucun tracker nest configuré', () => {
     const bare = resolveConfig({
       privacyPolicyUrl: '/c',

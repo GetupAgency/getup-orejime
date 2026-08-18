@@ -34,8 +34,19 @@ function attachGtm(id: string, lazy: boolean, manager: OrejimeManager): void {
   let loaded = false;
   let armed = false;
 
+  // `arm()` latches `armed` permanently on the first grant so the timer and
+  // interaction listeners are only ever scheduled once. But that means they
+  // can still be pending when consent is later revoked through the badge —
+  // Smartlook has no equivalent window because its check() re-verifies on
+  // every update and loads on the same tick as the grant, but GTM's
+  // deferred paths (the 5s timer, the interaction listeners) stay live
+  // across a revoke. `load()` must therefore recheck consent immediately
+  // before injecting, exactly like Smartlook's check(), rather than trusting
+  // the consent state that was true when `arm()` last ran. A revoked check
+  // does not set `loaded`, so the once-only guard still allows a later grant
+  // (via the same still-pending timer/listeners) to load exactly once.
   const load = () => {
-    if (loaded) return;
+    if (loaded || !manager.getConsent('analytics')) return;
     loaded = true;
     injectScript(`https://www.googletagmanager.com/gtag/js?id=${id}`);
     const w = window as unknown as { dataLayer?: unknown[] };
