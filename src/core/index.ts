@@ -28,21 +28,49 @@ function readState(manager: OrejimeManager, purposeIds: string[]): Record<string
 }
 
 /**
- * Enveloppe le manager Orejime pour que les écouteurs enregistrés via `on`
- * ne puissent jamais lever d'exception vers le code qui déclenche
- * l'événement (Orejime lui-même). Ces callbacks s'exécutent en dehors du
- * try/catch d'initConsent : sans cette garde, une erreur y échapperait vers
- * le site hôte, ce qui viole la contrainte « ne jamais casser le site
- * hôte ».
+ * Enveloppe le manager Orejime pour qu'aucun appel déclenché depuis
+ * l'extérieur du try/catch d'initConsent ne puisse lever vers le site hôte.
+ * Trois chemins sont concernés, tous armés par le module lui-même :
+ *
+ *  - `on` : les écouteurs sont invoqués par Orejime au moment de l'émission ;
+ *  - `setConsent` : appelé depuis les gestionnaires de clic du badge
+ *    (badge.ts, « OK pour moi » / « Tout refuser ») et depuis l'API publique ;
+ *  - `getConsent` : appelé depuis le load() différé de GTM (trackers.ts —
+ *    setTimeout de 5 s et écouteurs d'interaction sur `document`).
+ *
+ * Un cookie corrompu ou un storage bloqué y ferait lever Orejime, et l'erreur
+ * remonterait en exception non interceptée sur la page du client — violation
+ * directe de « un module de consentement ne doit jamais casser le site hôte »
+ * (docs/design.md §6).
+ *
+ * `getConsent` renvoie `false` en cas d'échec : c'est aussi la réponse
+ * fail-closed exigée par la spec — en cas de doute, aucun tracker ne démarre.
  *
  * `isDirty` est exposé via un accesseur (et non copié) pour ne jamais
  * figer un instantané au moment de l'enveloppement — le badge, par
- * exemple, l'appelle pour décider de se monter ou non.
+ * exemple, l'appelle pour décider de se monter ou non. Il n'est appelé que
+ * depuis l'intérieur du try/catch d'initConsent, d'où l'absence de garde.
  */
 function guardManager(manager: OrejimeManager): OrejimeManager {
   return {
-    getConsent: (id) => manager.getConsent(id),
-    setConsent: (id, v) => manager.setConsent(id, v),
+    getConsent: (id) => {
+      try {
+        return manager.getConsent(id);
+      } catch (error) {
+        console.error(
+          '[getup-consent] Lecture du consentement impossible, refus par défaut.',
+          error
+        );
+        return false;
+      }
+    },
+    setConsent: (id, v) => {
+      try {
+        manager.setConsent(id, v);
+      } catch (error) {
+        console.error('[getup-consent] Enregistrement du consentement impossible.', error);
+      }
+    },
     isDirty: () => manager.isDirty(),
     on: (event, cb) =>
       manager.on(event, () => {
