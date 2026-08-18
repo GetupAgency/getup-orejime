@@ -322,7 +322,7 @@ function getup_orejime_settings_page() {
                     <label for="go-smartlook-key">Clé projet Smartlook</label>
                     <input type="text" id="go-smartlook-key" name="getup_orejime_smartlook_key"
                            value="<?php echo esc_attr( get_option( 'getup_orejime_smartlook_key', '' ) ); ?>"
-                           placeholder="349a48d19669ffd4750548219e6e5808a26118a8" />
+                           placeholder="0000000000000000000000000000000000000000" />
                     <p class="description">Trouvable dans Smartlook &rarr; Settings &rarr; Projects &rarr; Project key.</p>
                 </div>
             </div>

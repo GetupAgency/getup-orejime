@@ -184,7 +184,7 @@ class GetupOrejime extends Module
 
         $html .= '<div class="form-group">';
         $html .= '<label>' . $this->l('Clé projet Smartlook (optionnel)') . '</label>';
-        $html .= '<input type="text" name="GETUPOREJIME_SMARTLOOK_KEY" value="' . Tools::safeOutput(Configuration::get('GETUPOREJIME_SMARTLOOK_KEY')) . '" class="form-control" placeholder="349a48d19669ffd4750548219e6e5808a26118a8" />';
+        $html .= '<input type="text" name="GETUPOREJIME_SMARTLOOK_KEY" value="' . Tools::safeOutput(Configuration::get('GETUPOREJIME_SMARTLOOK_KEY')) . '" class="form-control" placeholder="0000000000000000000000000000000000000000" />';
         $html .= '<p class="help-block">' . $this->l('Session recording conditionné au consentement analytics. Laisser vide pour désactiver.') . '</p>';
         $html .= '</div>';
 
