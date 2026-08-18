@@ -16,7 +16,8 @@
     "./theme/*": "./dist/theme/*"
   },
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
   "scripts": {
     "build": "rm -rf dist && tsup && tsc -p tsconfig.build.json && node scripts/emit-consent-defaults.mjs",
@@ -43,5 +44,8 @@
   },
   "peerDependencies": {
     "react": ">=18"
+  },
+  "bin": {
+    "getup-consent-assets": "./bin/install-assets.mjs"
   }
 }
