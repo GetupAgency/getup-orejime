@@ -110,6 +110,12 @@ export async function initConsent(input: ConsentConfig): Promise<ConsentApi> {
     manager.on('update', sync);
 
     attachTrackers(config, manager);
+    // Variante de placement de la bannière : les classes du thème
+    // (`.orejime-Banner--bottom-left` / `--bottom-right`) existaient sans que
+    // rien ne les pose. Le badge reçoit la sienne dans mountBadge.
+    document
+      .querySelector('.orejime-Banner')
+      ?.classList.add(`orejime-Banner--${config.ui.placement}`);
     if (config.ui.fixSeoH1) fixBannerHeading();
     if (config.ui.exitAnimation) attachExitAnimations();
     if (config.ui.badge) mountBadge(config, manager);

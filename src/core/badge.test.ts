@@ -40,6 +40,21 @@ describe('mountBadge', () => {
     expect(badge()).toBeNull();
   });
 
+  it('applique la variante de placement à gauche', () => {
+    const left = resolveConfig({
+      privacyPolicyUrl: '/c',
+      ui: { placement: 'bottom-left' },
+      purposes: [{ id: 'analytics', title: 'A', description: 'd', cookies: [], default: false }]
+    });
+    mountBadge(left, fakeManager());
+    expect(badge()!.classList.contains('getup-rgpd-badge--left')).toBe(true);
+  });
+
+  it('ne pose pas la variante gauche avec le placement par défaut', () => {
+    mountBadge(config, fakeManager());
+    expect(badge()!.classList.contains('getup-rgpd-badge--left')).toBe(false);
+  });
+
   it('expose accepter ET refuser au même niveau', () => {
     mountBadge(config, fakeManager());
     expect(btn('accept')).not.toBeNull();

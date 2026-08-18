@@ -28,7 +28,10 @@ export type OrejimeGlobal = { manager: OrejimeManager };
 export function toOrejimeConfig(config: ResolvedConfig): object {
   return {
     privacyPolicyUrl: config.privacyPolicyUrl,
-    logo: config.ui.logo,
+    // Même raison que `translations` ci-dessous : Orejime itère les clés de
+    // la config source, une clé présente à `undefined` n'est donc pas
+    // équivalente à une clé absente. On omet plutôt que de passer `undefined`.
+    ...(config.ui.logo ? { logo: config.ui.logo } : {}),
     // Orejime deep-merges cette config avec ses traductions par défaut
     // (Object.keys(source).forEach(...)) : une clé `translations` présente
     // avec la valeur `undefined` est tout de même itérée et écrase donc

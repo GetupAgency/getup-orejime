@@ -97,6 +97,15 @@ describe('initConsent', () => {
     err.mockRestore();
   });
 
+  it('pose la variante de placement sur la bannière', async () => {
+    document.body.innerHTML = '<div class="orejime-Banner"></div>';
+    const p = initConsent({ ...config, ui: { placement: 'bottom-left' } });
+    resolveScript(stubManager());
+    await p;
+    const banner = document.querySelector('.orejime-Banner')!;
+    expect(banner.classList.contains('orejime-Banner--bottom-left')).toBe(true);
+  });
+
   /**
    * Le thème ne masque la bannière Orejime que sous
    * `.getup-consent--badge-mode`. Si initConsent ne posait pas cette classe,

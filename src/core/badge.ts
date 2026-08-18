@@ -27,6 +27,12 @@ export function mountBadge(
 
   const root = document.createElement('div');
   root.className = 'getup-rgpd-badge';
+  // `ui.placement` était accepté et résolu par la config, exposé dans les
+  // deux écrans d'options, mais jamais lu : la variante CSS
+  // `.getup-rgpd-badge--left` du thème était inatteignable.
+  if (config.ui.placement === 'bottom-left') {
+    root.classList.add('getup-rgpd-badge--left');
+  }
 
   const label = document.createElement('span');
   label.className = 'getup-rgpd-badge-label';

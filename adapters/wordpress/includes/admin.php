@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action( 'admin_menu', 'getup_orejime_admin_menu' );
 add_action( 'admin_init', 'getup_orejime_register_settings' );
 add_action( 'admin_init', 'getup_orejime_maybe_run_optin_migration_check' );
+add_action( 'admin_init', 'getup_orejime_maybe_dismiss_optin_notice' );
 add_action( 'admin_enqueue_scripts', 'getup_orejime_admin_assets' );
 add_action( 'admin_notices', 'getup_orejime_optin_neutralized_notice' );
 
@@ -34,15 +35,47 @@ function getup_orejime_maybe_run_optin_migration_check(): void {
 }
 
 /**
+ * Acquittement de l'avertissement de neutralisation opt-in.
+ *
+ * L'option getup_orejime_optin_neutralized était posée une fois et jamais
+ * retirée : l'avertissement s'affichait sur *toutes* les pages d'admin,
+ * indéfiniment, sans moyen de le faire disparaître. Il est désormais
+ * supprimé sur acquittement explicite du client ; il ne réapparaîtra que si
+ * une migration ultérieure détecte à nouveau une finalité opt-in.
+ */
+function getup_orejime_maybe_dismiss_optin_notice(): void {
+    if ( ! isset( $_GET['getup_orejime_dismiss_optin'] ) ) {
+        return;
+    }
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+
+    check_admin_referer( 'getup_orejime_dismiss_optin' );
+    delete_option( 'getup_orejime_optin_neutralized' );
+
+    wp_safe_redirect( remove_query_arg( array( 'getup_orejime_dismiss_optin', '_wpnonce' ) ) );
+    exit;
+}
+
+/**
  * Warn the client when migration forced a previously opt-in purpose back to opt-out.
  */
 function getup_orejime_optin_neutralized_notice(): void {
     if ( get_option( 'getup_orejime_optin_neutralized' ) !== '1' ) {
         return;
     }
+
+    $dismiss_url = wp_nonce_url(
+        add_query_arg( 'getup_orejime_dismiss_optin', '1' ),
+        'getup_orejime_dismiss_optin'
+    );
+
     echo '<div class="notice notice-warning"><p>'
        . esc_html__( 'Getup Orejime 2.0 : une finalité était activée par défaut. Elle a été repassée en opt-in pour respecter le consentement préalable.', 'getup-orejime' )
-       . '</p></div>';
+       . ' <a href="' . esc_url( $dismiss_url ) . '">'
+       . esc_html__( 'J\'ai compris, masquer cet avertissement.', 'getup-orejime' )
+       . '</a></p></div>';
 }
 
 /**
@@ -103,7 +136,12 @@ function getup_orejime_sanitize_purposes( $raw ) {
             'title'       => sanitize_text_field( $p['title'] ?? '' ),
             'description' => sanitize_text_field( $p['description'] ?? '' ),
             'cookies'     => sanitize_text_field( $p['cookies'] ?? '' ),
-            'default'     => ! empty( $p['default'] ),
+            // Aucune finalité non essentielle n'est pré-cochée : le
+            // formulaire ne propose plus le choix, et la migration
+            // (getup_orejime_migrate_options) force la même valeur. Écrire
+            // false ici évite de conserver une valeur stockée que rien
+            // n'honore.
+            'default'     => false,
         );
     }
 
@@ -180,11 +218,12 @@ function getup_orejime_settings_page() {
                     <p class="description">Laisser vide pour aucun logo. Accepte GIF, PNG, SVG...</p>
                 </div>
                 <div class="go-field">
-                    <label for="go-placement">Position du bandeau</label>
+                    <label for="go-placement">Position du bandeau et du badge</label>
                     <select id="go-placement" name="getup_orejime_placement">
                         <option value="bottom-right" <?php selected( get_option( 'getup_orejime_placement', 'bottom-right' ), 'bottom-right' ); ?>>Bas droite</option>
                         <option value="bottom-left" <?php selected( get_option( 'getup_orejime_placement', 'bottom-right' ), 'bottom-left' ); ?>>Bas gauche</option>
                     </select>
+                    <p class="description">S'applique au bandeau Orejime comme au badge RGPD discret.</p>
                 </div>
                 <div class="go-field">
                     <label for="go-privacy">URL politique de confidentialité</label>
@@ -212,7 +251,7 @@ function getup_orejime_settings_page() {
             <!-- Finalités -->
             <div class="go-card">
                 <h2>Finalités (purposes)</h2>
-                <p class="description" style="margin-bottom:12px">Chaque finalité correspond à une catégorie de cookies que l'utilisateur peut accepter ou refuser.</p>
+                <p class="description" style="margin-bottom:12px">Chaque finalité correspond à une catégorie de cookies que l'utilisateur peut accepter ou refuser. Toutes sont refusées tant que le visiteur n'a pas donné son accord : le consentement préalable ne se paramètre pas.</p>
                 <div class="go-purposes-list" id="go-purposes-list">
                     <?php foreach ( $purposes as $i => $p ) : ?>
                     <div class="go-purpose" data-index="<?php echo $i; ?>">
@@ -230,19 +269,10 @@ function getup_orejime_settings_page() {
                             <label>Description</label>
                             <input type="text" class="go-p-desc" value="<?php echo esc_attr( $p['description'] ?? '' ); ?>" />
                         </div>
-                        <div class="go-row">
-                            <div>
-                                <label>Cookies (séparés par virgule, * = wildcard)</label>
-                                <input type="text" class="go-p-cookies" value="<?php echo esc_attr( $p['cookies'] ?? '' ); ?>"
-                                       placeholder="_ga, _ga_*, _gid" />
-                            </div>
-                            <div style="flex:0 0 120px">
-                                <label>Par défaut</label>
-                                <select class="go-p-default">
-                                    <option value="0" <?php selected( empty( $p['default'] ) ); ?>>Refusé</option>
-                                    <option value="1" <?php selected( ! empty( $p['default'] ) ); ?>>Accepté</option>
-                                </select>
-                            </div>
+                        <div class="go-field">
+                            <label>Cookies (séparés par virgule, * = wildcard)</label>
+                            <input type="text" class="go-p-cookies" value="<?php echo esc_attr( $p['cookies'] ?? '' ); ?>"
+                                   placeholder="_ga, _ga_*, _gid" />
                         </div>
                         <button type="button" class="button go-remove-purpose" style="margin-top:8px;color:#b32d2e">Supprimer</button>
                     </div>
@@ -280,7 +310,7 @@ function getup_orejime_settings_page() {
                             <?php checked( get_option( 'getup_orejime_badge_mode', false ) ); ?> />
                         Badge RGPD discret (scroll-up)
                     </label>
-                    <p class="description">Remplace le gros bandeau par un petit badge qui apparaît quand l'utilisateur remonte la page. Deux boutons : « OK pour moi » (tout accepter) et « En savoir plus » (ouvre le bandeau complet).</p>
+                    <p class="description">Remplace le gros bandeau par un petit badge qui apparaît quand l'utilisateur remonte la page. Trois boutons : « OK pour moi » (tout accepter), « Tout refuser » (tout refuser en un clic) et « En savoir plus » (ouvre le bandeau complet). Décoché, c'est le bandeau Orejime complet qui s'affiche.</p>
                 </div>
             </div>
 
@@ -316,7 +346,7 @@ function getup_orejime_settings_page() {
         var form = document.getElementById('go-form');
 
         function purposeTemplate(data) {
-            data = data || { id: '', title: '', description: '', cookies: '', 'default': false };
+            data = data || { id: '', title: '', description: '', cookies: '' };
             var div = document.createElement('div');
             div.className = 'go-purpose';
             div.innerHTML =
@@ -325,10 +355,7 @@ function getup_orejime_settings_page() {
                     '<div><label>Titre</label><input type="text" class="go-p-title" value="' + esc(data.title) + '" /></div>' +
                 '</div>' +
                 '<div class="go-field"><label>Description</label><input type="text" class="go-p-desc" value="' + esc(data.description) + '" /></div>' +
-                '<div class="go-row">' +
-                    '<div><label>Cookies (virgule, * = wildcard)</label><input type="text" class="go-p-cookies" value="' + esc(data.cookies) + '" placeholder="_ga, _ga_*" /></div>' +
-                    '<div style="flex:0 0 120px"><label>Par défaut</label><select class="go-p-default"><option value="0"' + (!data['default'] ? ' selected' : '') + '>Refusé</option><option value="1"' + (data['default'] ? ' selected' : '') + '>Accepté</option></select></div>' +
-                '</div>' +
+                '<div class="go-field"><label>Cookies (virgule, * = wildcard)</label><input type="text" class="go-p-cookies" value="' + esc(data.cookies) + '" placeholder="_ga, _ga_*" /></div>' +
                 '<button type="button" class="button go-remove-purpose" style="margin-top:8px;color:#b32d2e">Supprimer</button>';
             return div;
         }
@@ -355,8 +382,7 @@ function getup_orejime_settings_page() {
                     id: el.querySelector('.go-p-id').value,
                     title: el.querySelector('.go-p-title').value,
                     description: el.querySelector('.go-p-desc').value,
-                    cookies: el.querySelector('.go-p-cookies').value,
-                    'default': el.querySelector('.go-p-default').value === '1'
+                    cookies: el.querySelector('.go-p-cookies').value
                 });
             });
             hidden.value = JSON.stringify(purposes);

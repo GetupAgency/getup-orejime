@@ -21,6 +21,18 @@ describe('toOrejimeConfig', () => {
     expect(o.purposes[0].cookies).toHaveLength(2);
   });
 
+  it("n'inclut pas la clé logo quand aucun logo n'est fourni", () => {
+    // Même piège que `translations` : Orejime itère Object.keys() de la config
+    // source, une clé présente à `undefined` écrase donc la valeur par défaut
+    // au lieu de la laisser intacte. La clé doit être absente.
+    const bare = resolveConfig({
+      privacyPolicyUrl: '/c',
+      purposes: [{ id: 'analytics', title: 'A', description: 'd', cookies: [], default: false }]
+    });
+    const o = toOrejimeConfig(bare) as Record<string, unknown>;
+    expect('logo' in o).toBe(false);
+  });
+
   it("n'inclut pas la clé translations quand bannerTitle n'est pas fourni", () => {
     // Orejime fusionne cette config avec ses traductions par défaut via un
     // merge qui itère Object.keys(source) : une clé `translations` présente
