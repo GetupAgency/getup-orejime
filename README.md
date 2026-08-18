@@ -197,8 +197,9 @@ Les cibles sans import ESM (WordPress, PrestaShop) la retrouvent sur
 | `locale` | `fr` | 14 locales disponibles |
 | `cookie.name` / `.duration` | `getup-cookies` / `365` | **Ne pas changer** sur un site existant |
 | `purposes[]` | *requis* | `id`, `title`, `description`, `cookies`, `default: false` |
-| `trackers.gtm` | — | `{ id, lazy }` — conditionné au consentement analytics |
-| `trackers.smartlook` | — | `{ key, region }` — idem |
+| `trackers.gtm` | — | `{ id, lazy, purposeId }` — ne se charge qu'après consentement |
+| `trackers.smartlook` | — | `{ key, region, purposeId }` — idem |
+| `trackers.*.purposeId` | `analytics` | Finalité qui commande le chargement du traceur |
 | `ui.badge` | `true` | Badge scroll-up plutôt que bandeau permanent |
 | `ui.placement` | `bottom-right` | `bottom-right` \| `bottom-left` |
 | `ui.exitAnimation` / `.fixSeoH1` | `true` | Animations de sortie, correctif du H1 dupliqué |
@@ -207,9 +208,9 @@ Les cibles sans import ESM (WordPress, PrestaShop) la retrouvent sur
 
 ## Limites connues
 
-- **L'identifiant de finalité `analytics` est codé en dur** dans le pilotage des
-  traceurs. Un client qui nomme la sienne autrement obtient un module
-  silencieusement inerte, sans diagnostic.
+- **Les back-offices WordPress et PrestaShop n'exposent pas `purposeId`.** Un
+  client dont la finalité ne s'appelle pas `analytics` doit la renommer ainsi ;
+  le module l'avertit désormais en console au lieu de rester inerte en silence.
 - **Révoquer son consentement n'arrête pas un enregistreur déjà chargé** avant
   rechargement de la page.
 - **PrestaShop n'expose ni `placement`, ni `exitAnimation`, ni `fixSeoH1`** dans

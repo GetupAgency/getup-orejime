@@ -31,7 +31,7 @@ function injectScript(src: string): void {
  * l'a jamais demandé, et une porte de sortie ici inviterait exactement la
  * régression silencieuse que ce projet existe pour empêcher).
  */
-function attachGtm(id: string, lazy: boolean, manager: OrejimeManager): void {
+function attachGtm(id: string, lazy: boolean, purposeId: string, manager: OrejimeManager): void {
   let loaded = false;
   let armed = false;
 
@@ -47,7 +47,7 @@ function attachGtm(id: string, lazy: boolean, manager: OrejimeManager): void {
   // does not set `loaded`, so the once-only guard still allows a later grant
   // (via the same still-pending timer/listeners) to load exactly once.
   const load = () => {
-    if (loaded || !manager.getConsent('analytics')) return;
+    if (loaded || !manager.getConsent(purposeId)) return;
     loaded = true;
     injectScript(`https://www.googletagmanager.com/gtag/js?id=${id}`);
     // Objet `arguments` obligatoire : `gtag.js` ignore les commandes empilées
@@ -58,7 +58,7 @@ function attachGtm(id: string, lazy: boolean, manager: OrejimeManager): void {
   };
 
   const arm = () => {
-    if (armed || loaded || !manager.getConsent('analytics')) return;
+    if (armed || loaded || !manager.getConsent(purposeId)) return;
     armed = true;
     if (!lazy) { load(); return; }
     INTERACTIONS.forEach((e) =>
@@ -71,10 +71,10 @@ function attachGtm(id: string, lazy: boolean, manager: OrejimeManager): void {
   manager.on('update', arm);
 }
 
-function attachSmartlook(key: string, region: string, manager: OrejimeManager): void {
+function attachSmartlook(key: string, region: string, purposeId: string, manager: OrejimeManager): void {
   let loaded = false;
   const check = () => {
-    if (loaded || !manager.getConsent('analytics')) return;
+    if (loaded || !manager.getConsent(purposeId)) return;
     loaded = true;
     injectScript('https://web-sdk.smartlook.com/recorder.js');
     const w = window as unknown as { smartlook?: { api: unknown[] } & ((...a: unknown[]) => void) };
@@ -90,6 +90,6 @@ function attachSmartlook(key: string, region: string, manager: OrejimeManager): 
 
 export function attachTrackers(config: ResolvedConfig, manager: OrejimeManager): void {
   const { gtm, smartlook } = config.trackers;
-  if (gtm) attachGtm(gtm.id, gtm.lazy ?? true, manager);
-  if (smartlook) attachSmartlook(smartlook.key, smartlook.region ?? 'eu', manager);
+  if (gtm) attachGtm(gtm.id, gtm.lazy ?? true, gtm.purposeId, manager);
+  if (smartlook) attachSmartlook(smartlook.key, smartlook.region ?? 'eu', smartlook.purposeId, manager);
 }

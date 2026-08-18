@@ -5,6 +5,8 @@ export const CONSENT_SIGNALS: ConsentSignal[] = [
   'analytics_storage', 'ad_storage', 'ad_user_data', 'ad_personalization'
 ];
 
+export const DEFAULT_TRACKER_PURPOSE = 'analytics';
+
 export const DEFAULT_COOKIE_NAME = 'getup-cookies';
 export const DEFAULT_COOKIE_DURATION = 365;
 
@@ -29,8 +31,8 @@ export type ConsentConfig = {
   purposes: Purpose[];
   consentMode?: { purposeSignals?: Record<string, ConsentSignal[]> };
   trackers?: {
-    gtm?: { id: string; lazy?: boolean };
-    smartlook?: { key: string; region?: string };
+    gtm?: { id: string; lazy?: boolean; purposeId?: string };
+    smartlook?: { key: string; region?: string; purposeId?: string };
   };
   ui?: {
     badge?: boolean; exitAnimation?: boolean; fixSeoH1?: boolean;
@@ -41,18 +43,67 @@ export type ConsentConfig = {
   assetsBaseUrl?: string;
 };
 
+export type ResolvedTrackers = {
+  gtm?: { id: string; lazy?: boolean; purposeId: string };
+  smartlook?: { key: string; region?: string; purposeId: string };
+};
+
 export type ResolvedConfig = {
   privacyPolicyUrl: string;
   locale: string;
   cookie: { name: string; duration: number };
   purposes: (Omit<Purpose, 'default'> & { default: boolean })[];
   consentMode: { purposeSignals: Record<string, ConsentSignal[]> };
-  trackers: NonNullable<ConsentConfig['trackers']>;
+  trackers: ResolvedTrackers;
   ui: Required<Omit<NonNullable<ConsentConfig['ui']>, 'logo' | 'bannerTitle'>> &
       { logo?: string; bannerTitle?: string };
   theme: { preset: string; customCss?: string };
   assetsBaseUrl: string;
 };
+
+/**
+ * Rattache chaque traceur à la finalité qui commande son chargement.
+ *
+ * Le défaut `analytics` était autrefois codé en dur dans trackers.ts : un site
+ * nommant sa finalité autrement obtenait un module inerte — les traceurs ne
+ * partaient jamais — sans le moindre diagnostic. L'échec restait fermé, donc
+ * conforme, mais silencieux, et le client n'avait aucun moyen de comprendre.
+ */
+function resolveTrackers(
+  input: ConsentConfig['trackers'],
+  purposeIds: string[]
+): ResolvedTrackers {
+  if (!input) return {};
+
+  const check = (name: string, purposeId: string): string => {
+    if (!purposeIds.includes(purposeId)) {
+      console.warn(
+        `[getup-consent] Le traceur "${name}" est piloté par la finalité ` +
+        `"${purposeId}", qui n'est pas déclarée dans purposes ` +
+        `(${purposeIds.join(', ')}). Il ne se chargera jamais. ` +
+        `Renseignez trackers.${name}.purposeId, ou donnez à votre finalité ` +
+        `l'identifiant "${DEFAULT_TRACKER_PURPOSE}" — c'est la seule voie depuis ` +
+        `les back-offices WordPress et PrestaShop, qui n'exposent pas ce réglage.`
+      );
+    }
+    return purposeId;
+  };
+
+  const resolved: ResolvedTrackers = {};
+  if (input.gtm) {
+    resolved.gtm = {
+      ...input.gtm,
+      purposeId: check('gtm', input.gtm.purposeId ?? DEFAULT_TRACKER_PURPOSE)
+    };
+  }
+  if (input.smartlook) {
+    resolved.smartlook = {
+      ...input.smartlook,
+      purposeId: check('smartlook', input.smartlook.purposeId ?? DEFAULT_TRACKER_PURPOSE)
+    };
+  }
+  return resolved;
+}
 
 export function resolveConfig(input: ConsentConfig): ResolvedConfig {
   if (!input.privacyPolicyUrl) {
@@ -91,7 +142,7 @@ export function resolveConfig(input: ConsentConfig): ResolvedConfig {
     consentMode: {
       purposeSignals: { ...DEFAULT_PURPOSE_SIGNALS, ...input.consentMode?.purposeSignals }
     },
-    trackers: input.trackers ?? {},
+    trackers: resolveTrackers(input.trackers, purposes.map((p) => p.id)),
     ui: {
       badge: input.ui?.badge ?? true,
       exitAnimation: input.ui?.exitAnimation ?? true,
