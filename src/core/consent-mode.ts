@@ -11,6 +11,7 @@ export function mapConsentState(
   state: Record<string, boolean>
 ): SignalState {
   const result = allDenied();
+  if (!state || typeof state !== 'object') return result;
   for (const [purposeId, granted] of Object.entries(state)) {
     if (!granted) continue;
     for (const signal of config.consentMode.purposeSignals[purposeId] ?? []) {

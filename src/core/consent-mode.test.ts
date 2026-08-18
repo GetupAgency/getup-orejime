@@ -57,6 +57,16 @@ describe('mapConsentState', () => {
     const r = mapConsentState(config, { inconnue: true });
     expect(Object.values(r).every((v) => v === 'denied')).toBe(true);
   });
+
+  it('traite null comme un état vide (tout refusé)', () => {
+    const r = mapConsentState(config, null as any);
+    expect(Object.values(r).every((v) => v === 'denied')).toBe(true);
+  });
+
+  it('traite undefined comme un état vide (tout refusé)', () => {
+    const r = mapConsentState(config, undefined as any);
+    expect(Object.values(r).every((v) => v === 'denied')).toBe(true);
+  });
 });
 
 describe('pushConsentUpdate', () => {
@@ -68,5 +78,19 @@ describe('pushConsentUpdate', () => {
     expect(dl[0][0]).toBe('consent');
     expect(dl[0][1]).toBe('update');
     expect(dl[0][2].analytics_storage).toBe('granted');
+  });
+
+  it('traite null sans lever (tout refusé)', () => {
+    pushConsentUpdate(config, null as any);
+    const dl = (window as any).dataLayer;
+    expect(dl[0][0]).toBe('consent');
+    expect(Object.values(dl[0][2]).every((v) => v === 'denied')).toBe(true);
+  });
+
+  it('traite undefined sans lever (tout refusé)', () => {
+    pushConsentUpdate(config, undefined as any);
+    const dl = (window as any).dataLayer;
+    expect(dl[0][0]).toBe('consent');
+    expect(Object.values(dl[0][2]).every((v) => v === 'denied')).toBe(true);
   });
 });
