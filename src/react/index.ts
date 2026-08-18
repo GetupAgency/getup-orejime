@@ -1,0 +1,1 @@
+export { ConsentManager } from './ConsentManager';

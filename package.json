@@ -5,22 +5,39 @@
   "type": "module",
   "license": "MIT",
   "exports": {
-    "./core": { "types": "./dist/core/index.d.ts", "import": "./dist/core/index.js" },
-    "./react": { "types": "./dist/react/index.d.ts", "import": "./dist/react/index.js" },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js"
+    },
     "./theme/*": "./dist/theme/*"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "dependencies": { "orejime": "^3.1.0" },
+  "dependencies": {
+    "orejime": "^3.1.0"
+  },
   "devDependencies": {
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
     "jsdom": "^29.1.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "tsup": "^8.5.1",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
+  },
+  "peerDependencies": {
+    "react": ">=18"
   }
 }
