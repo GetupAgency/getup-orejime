@@ -4,3 +4,5 @@ release/
 .playwright-root/
 test-results/
 playwright-report/
+adapters/wordpress/vendor/
+adapters/wordpress/.phpunit.result.cache
