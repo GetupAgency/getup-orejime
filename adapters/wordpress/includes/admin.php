@@ -10,8 +10,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 add_action( 'admin_menu', 'getup_orejime_admin_menu' );
 add_action( 'admin_init', 'getup_orejime_register_settings' );
+add_action( 'admin_init', 'getup_orejime_maybe_run_optin_migration_check' );
 add_action( 'admin_enqueue_scripts', 'getup_orejime_admin_assets' );
 add_action( 'admin_notices', 'getup_orejime_optin_neutralized_notice' );
+
+/**
+ * Covers the in-place update path: register_activation_hook() only fires on
+ * activation, never when a client takes the update through the WordPress
+ * updater. Without this, a 1.4.0 site upgraded to 2.0.0 without a
+ * deactivate/reactivate cycle would have its opt-in purpose silently
+ * neutralised by getup_orejime_migrate_options() (which runs on every page
+ * load) while never getting the admin_notices warning about it.
+ *
+ * Guarded by a cheap string comparison so the detection itself only runs
+ * once per version bump, not on every admin page load.
+ */
+function getup_orejime_maybe_run_optin_migration_check(): void {
+    $stored = (string) get_option( 'getup_orejime_schema_version', '' );
+    if ( ! getup_orejime_schema_version_needs_migration( $stored, GETUP_OREJIME_VERSION ) ) {
+        return;
+    }
+    getup_orejime_apply_optin_migration_flag();
+}
 
 /**
  * Warn the client when migration forced a previously opt-in purpose back to opt-out.

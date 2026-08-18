@@ -99,4 +99,19 @@ class MigrateTest extends TestCase
     {
         $this->assertFalse(getup_orejime_has_optin_purpose([]));
     }
+
+    public function testNeedsMigrationWhenStoredVersionIsEmpty(): void
+    {
+        $this->assertTrue(getup_orejime_schema_version_needs_migration('', '2.0.0'));
+    }
+
+    public function testNeedsMigrationWhenStoredVersionDiffersFromCurrent(): void
+    {
+        $this->assertTrue(getup_orejime_schema_version_needs_migration('1.4.0', '2.0.0'));
+    }
+
+    public function testDoesNotNeedMigrationWhenVersionsMatch(): void
+    {
+        $this->assertFalse(getup_orejime_schema_version_needs_migration('2.0.0', '2.0.0'));
+    }
 }

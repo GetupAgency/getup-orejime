@@ -85,3 +85,18 @@ function getup_orejime_has_optin_purpose(array $legacy): bool
     }
     return false;
 }
+
+/**
+ * Détecte si la version de schéma stockée diffère de la version courante du
+ * plugin — donc si le contrôle de migration (opt-in neutralisé, etc.) doit
+ * être (re)joué.
+ *
+ * Couvre le chemin de mise à jour in-place : register_activation_hook() ne
+ * se déclenche qu'à l'activation, jamais lors d'une mise à jour via le
+ * updater WordPress, donc un site 1.4.0 mis à jour vers 2.0.0 sans
+ * désactivation/réactivation doit aussi être détecté — via admin_init.
+ */
+function getup_orejime_schema_version_needs_migration(string $stored, string $current): bool
+{
+    return $stored !== $current;
+}

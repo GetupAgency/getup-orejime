@@ -23,6 +23,27 @@ if (is_admin()) {
     require_once GETUP_OREJIME_DIR . 'includes/admin.php';
 }
 
+/**
+ * Détecte une finalité historique opt-in (default: true) et positionne le
+ * drapeau d'avertissement, puis marque la version de schéma comme migrée.
+ *
+ * Impure par nécessité (options WordPress) ; la détection elle-même reste
+ * déléguée aux fonctions pures de includes/migrate.php. Appelée à la fois
+ * depuis l'activation (installs neufs / réactivation manuelle) et depuis
+ * admin_init (Étape suivante, dans includes/admin.php) pour couvrir le
+ * chemin de mise à jour in-place, que register_activation_hook() ne
+ * déclenche jamais.
+ */
+function getup_orejime_apply_optin_migration_flag(): void
+{
+    $legacyPurposes = get_option('getup_orejime_purposes', '[]');
+    if (getup_orejime_has_optin_purpose(['getup_orejime_purposes' => $legacyPurposes])) {
+        update_option('getup_orejime_optin_neutralized', '1');
+    }
+
+    update_option('getup_orejime_schema_version', GETUP_OREJIME_VERSION);
+}
+
 register_activation_hook(__FILE__, static function (): void {
     if (get_option('getup_orejime_privacy_policy_url') === false) {
         add_option('getup_orejime_privacy_policy_url', '/politique-de-confidentialite');
@@ -36,10 +57,5 @@ register_activation_hook(__FILE__, static function (): void {
     // Une finalité historique opt-in (default: true) est repassée en opt-out par
     // la migration : le client doit en être averti plutôt que voir son
     // consentement basculer silencieusement.
-    $legacyPurposes = get_option('getup_orejime_purposes', '[]');
-    if (getup_orejime_has_optin_purpose(['getup_orejime_purposes' => $legacyPurposes])) {
-        update_option('getup_orejime_optin_neutralized', '1');
-    }
-
-    update_option('getup_orejime_schema_version', '2.0.0');
+    getup_orejime_apply_optin_migration_flag();
 });
