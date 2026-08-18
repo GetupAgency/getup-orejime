@@ -162,6 +162,33 @@ Ils s'installent comme n'importe quel plugin ou module. Les réglages d'une
 installation 1.x sont migrés automatiquement : le nom de cookie et sa durée sont
 préservés, donc **les visiteurs ayant déjà consenti ne sont pas re-sollicités**.
 
+## Revenir sur son choix
+
+L'article 7.3 du RGPD exige que retirer son consentement soit aussi simple que
+de le donner. Posez ce bouton où vous voulez — typiquement en pied de page :
+
+```html
+<button data-getup-consent="open">Gérer mes cookies</button>
+```
+
+C'est tout. Le module écoute les clics par délégation, donc **aucun JavaScript
+côté site**, et le même attribut fonctionne à l'identique sur Next, Astro,
+WordPress et PrestaShop. Le déclencheur peut être rendu après l'initialisation
+(pied de page hydraté tardivement, navigation côté client) : il fonctionnera
+quand même.
+
+Pour piloter à la main, `initConsent()` retourne une `ConsentApi` :
+
+```ts
+const api = await initConsent(consentConfig);
+api.openPreferences();      // ouvre la modale
+api.acceptAll();            // ou declineAll()
+api.getConsent('analytics');
+```
+
+Les cibles sans import ESM (WordPress, PrestaShop) la retrouvent sur
+`window.GetupConsent.api`, publiée une fois l'initialisation terminée.
+
 ## Configuration
 
 | Clé | Défaut | Rôle |
@@ -180,13 +207,6 @@ préservés, donc **les visiteurs ayant déjà consenti ne sont pas re-sollicit�
 
 ## Limites connues
 
-- **Un visiteur ayant consenti ne peut pas revenir sur son choix.** Une fois le
-  consentement enregistré, Orejime retire son bandeau du DOM et le badge ne se
-  remonte pas ; `ConsentApi.openBanner()` cible alors un élément inexistant, et
-  ni le wrapper React ni le global `window.GetupConsent` n'exposent d'API de
-  retrait. **L'article 7.3 du RGPD exige que retirer son consentement soit aussi
-  simple que de le donner** — c'est le manque le plus important du module
-  aujourd'hui, à corriger avant tout déploiement client large.
 - **L'identifiant de finalité `analytics` est codé en dur** dans le pilotage des
   traceurs. Un client qui nomme la sienne autrement obtient un module
   silencieusement inerte, sans diagnostic.

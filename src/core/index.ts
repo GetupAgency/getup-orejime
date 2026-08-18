@@ -19,7 +19,7 @@ export type ConsentApi = {
   setConsent(purposeId: string, value: boolean): void;
   acceptAll(): void;
   declineAll(): void;
-  openBanner(): void;
+  openPreferences(): void;
 };
 
 const INERT: ConsentApi = {
@@ -28,7 +28,7 @@ const INERT: ConsentApi = {
   setConsent: () => {},
   acceptAll: () => {},
   declineAll: () => {},
-  openBanner: () => {}
+  openPreferences: () => {}
 };
 
 function readState(manager: OrejimeManager, purposeIds: string[]): Record<string, boolean> {
@@ -91,6 +91,30 @@ function guardManager(manager: OrejimeManager): OrejimeManager {
   };
 }
 
+/**
+ * Écoute par délégation les clics sur `[data-getup-consent="open"]`, pour
+ * qu'un site pose un lien « Gérer mes cookies » sans écrire une ligne de JS —
+ * et de façon identique sur Next, Astro, WordPress et PrestaShop.
+ *
+ * La délégation vaut mieux qu'un écouteur par élément : le déclencheur peut
+ * être rendu après l'initialisation (pied de page hydraté tardivement, page
+ * changée côté client) et fonctionnera quand même.
+ */
+function attachPreferencesTrigger(open: () => void): void {
+  document.addEventListener('click', (event) => {
+    const target = event.target as Element | null;
+    if (!target?.closest?.('[data-getup-consent="open"]')) return;
+    event.preventDefault();
+    // Le clic vient de la page hôte : un throw ici atterrirait sur son
+    // window.onerror, pas sur un appelant à nous.
+    try {
+      open();
+    } catch (error) {
+      console.error('[getup-consent] Ouverture des préférences impossible.', error);
+    }
+  });
+}
+
 export async function initConsent(input: ConsentConfig): Promise<ConsentApi> {
   if (typeof document === 'undefined') return INERT;
 
@@ -101,7 +125,8 @@ export async function initConsent(input: ConsentConfig): Promise<ConsentApi> {
     // rendue : en mode badge elle ne doit jamais être peinte, même un instant.
     document.documentElement.classList.toggle(BADGE_MODE_CLASS, config.ui.badge);
 
-    const { manager: rawManager } = await loadOrejime(config);
+    const orejime = await loadOrejime(config);
+    const { manager: rawManager } = orejime;
     const manager = guardManager(rawManager);
 
     const purposeIds = config.purposes.map((p) => p.id);
@@ -128,15 +153,20 @@ export async function initConsent(input: ConsentConfig): Promise<ConsentApi> {
       purposeIds.forEach((id) => manager.setConsent(id, value));
     };
 
+    // Retrait du consentement. `prompt()` est la seule voie supportée : une
+    // fois le choix enregistré, Orejime retire sa bannière du DOM, et le
+    // badge ne se remonte pas. L'article 7.3 du RGPD exige que retirer son
+    // consentement soit aussi simple que de le donner.
+    const openPreferences = () => orejime.prompt();
+    attachPreferencesTrigger(openPreferences);
+
     return {
       isInert: false,
       getConsent: (id) => manager.getConsent(id),
       setConsent: (id, v) => manager.setConsent(id, v),
       acceptAll: () => setAll(true),
       declineAll: () => setAll(false),
-      openBanner: () => {
-        document.querySelector('.orejime-Banner')?.classList.add('orejime-Banner--show');
-      }
+      openPreferences
     };
   } catch (error) {
     console.error('[getup-consent] Initialisation impossible, mode inerte.', error);

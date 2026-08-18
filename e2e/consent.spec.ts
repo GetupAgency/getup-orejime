@@ -226,3 +226,23 @@ test('phase 1 présente : « OK pour moi » émet un update granted en objet arg
     )
     .toBe(true);
 });
+
+test('un visiteur ayant consenti peut rouvrir ses préférences', async ({ page }) => {
+  await page.goto('/');
+  await revealAndExpandBadge(page);
+  await page.locator('.getup-rgpd-btn--accept').click();
+  await page.waitForTimeout(800);
+
+  // Le visiteur revient plus tard sur le site.
+  await page.reload();
+  await page.waitForTimeout(800);
+
+  // Plus aucune interface de consentement spontanée : le choix est fait.
+  await expect(page.locator('.getup-rgpd-badge')).toHaveCount(0);
+
+  // Le lien du pied de page doit rouvrir les préférences. C'est l'exigence de
+  // l'article 7.3 du RGPD : retirer son consentement doit être aussi simple
+  // que de le donner.
+  await page.locator('[data-getup-consent="open"]').click();
+  await expect(page.locator('[role="dialog"]')).toBeVisible();
+});

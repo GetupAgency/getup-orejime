@@ -23,7 +23,17 @@ export type OrejimeManager = {
   on(event: 'update', cb: () => void): void;
 };
 
-export type OrejimeGlobal = { manager: OrejimeManager };
+export type OrejimeGlobal = {
+  manager: OrejimeManager;
+  /**
+   * Ouvre la modale de consentement. C'est le seul moyen supporté de
+   * revenir sur un choix déjà fait : une fois le consentement enregistré,
+   * Orejime retire sa bannière du DOM, donc toute tentative de la révéler
+   * par une classe CSS ne trouve plus rien. Documenté dans le README
+   * d'Orejime 3.2.1, section API.
+   */
+  prompt(): void;
+};
 
 export function toOrejimeConfig(config: ResolvedConfig): object {
   return {

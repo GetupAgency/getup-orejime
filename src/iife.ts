@@ -20,7 +20,14 @@ function initFromConfigElement(): void {
 
   try {
     const config = JSON.parse(el.textContent);
-    void initConsent(config);
+    // L'API résolue est publiée sur le global pour les cibles qui n'ont pas
+    // d'import ESM (WordPress, PrestaShop) : sans elle, un site n'aurait
+    // aucun moyen d'ouvrir les préférences autrement que par l'attribut
+    // `data-getup-consent="open"`.
+    void initConsent(config).then((resolved) => {
+      (window as unknown as { GetupConsent: typeof api & { api?: unknown } })
+        .GetupConsent.api = resolved;
+    });
   } catch (error) {
     console.error('[getup-consent] Configuration JSON invalide, initialisation ignorée.', error);
   }

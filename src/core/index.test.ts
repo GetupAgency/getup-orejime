@@ -14,9 +14,9 @@ beforeEach(() => {
   __resetLoader();
 });
 
-function resolveScript(manager: unknown) {
+function resolveScript(manager: unknown, prompt: () => void = () => {}) {
   const s = document.head.querySelector('script') as HTMLScriptElement;
-  (window as any).orejime = { manager };
+  (window as any).orejime = { manager, prompt };
   s.dispatchEvent(new Event('load'));
 }
 
@@ -276,6 +276,82 @@ describe('initConsent', () => {
     expect(() => api.acceptAll()).not.toThrow();
     expect(m.setConsent).toHaveBeenCalledWith('analytics', true);
 
+    err.mockRestore();
+  });
+});
+
+
+describe('retrait du consentement', () => {
+  it('openPreferences délègue à orejime.prompt()', async () => {
+    const prompt = vi.fn();
+    const p = initConsent(config);
+    resolveScript(stubManager(), prompt);
+    const api = await p;
+
+    api.openPreferences();
+
+    expect(prompt).toHaveBeenCalledTimes(1);
+  });
+
+  it('un clic sur [data-getup-consent="open"] ouvre les préférences', async () => {
+    const prompt = vi.fn();
+    const p = initConsent(config);
+    resolveScript(stubManager(), prompt);
+    await p;
+
+    document.body.innerHTML = '<footer><button data-getup-consent="open">Gérer mes cookies</button></footer>';
+    (document.querySelector('[data-getup-consent="open"]') as HTMLElement).click();
+
+    expect(prompt).toHaveBeenCalledTimes(1);
+  });
+
+  it('le déclencheur fonctionne sur un descendant du bouton', async () => {
+    const prompt = vi.fn();
+    const p = initConsent(config);
+    resolveScript(stubManager(), prompt);
+    await p;
+
+    document.body.innerHTML =
+      '<button data-getup-consent="open"><span id="ico">🍪</span> Gérer mes cookies</button>';
+    (document.getElementById('ico') as HTMLElement).click();
+
+    expect(prompt).toHaveBeenCalledTimes(1);
+  });
+
+  it('un clic ailleurs ne déclenche rien', async () => {
+    const prompt = vi.fn();
+    const p = initConsent(config);
+    resolveScript(stubManager(), prompt);
+    await p;
+
+    document.body.innerHTML = '<button id="autre">Autre chose</button>';
+    (document.getElementById('autre') as HTMLElement).click();
+
+    expect(prompt).not.toHaveBeenCalled();
+  });
+
+  it("un prompt qui lève ne casse pas la page hôte", async () => {
+    const capture = captureUncaught();
+    const p = initConsent(config);
+    resolveScript(stubManager(), () => { throw new Error('boum'); });
+    await p;
+
+    document.body.innerHTML = '<button data-getup-consent="open">x</button>';
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    (document.querySelector('[data-getup-consent="open"]') as HTMLElement).click();
+
+    expect(capture.stop()).toHaveLength(0);
+    err.mockRestore();
+  });
+
+  it('en mode inerte, openPreferences ne lève pas', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const p = initConsent(config);
+    (document.head.querySelector('script') as HTMLScriptElement).dispatchEvent(new Event('error'));
+    const api = await p;
+
+    expect(api.isInert).toBe(true);
+    expect(() => api.openPreferences()).not.toThrow();
     err.mockRestore();
   });
 });
