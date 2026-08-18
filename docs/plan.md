@@ -49,7 +49,7 @@ Le plan ajoute aussi `consentMode.purposeSignals` à la config (Tâche 2). La sp
 
 ---
 
-### Tâche 1 : Amorçage du repo et module de config
+### Task 1 — Amorçage du repo et module de config
 
 Le squelette du projet est plié dans cette tâche : il n'a d'intérêt que porté par un premier livrable testable.
 
@@ -337,7 +337,7 @@ git commit -m "feat(core): schéma de config et garde-fou d'opt-in"
 
 ---
 
-### Tâche 2 : Consent Mode v2
+### Task 2 — Consent Mode v2
 
 **Fichiers :**
 - Créer : `src/core/consent-mode.ts`
@@ -493,7 +493,7 @@ git commit -m "feat(core): Consent Mode v2, refus par défaut non contournable"
 
 ---
 
-### Tâche 3 : Chargeur Orejime
+### Task 3 — Chargeur Orejime
 
 **Fichiers :**
 - Créer : `src/core/loader.ts`
@@ -699,7 +699,7 @@ git commit -m "feat(core): chargeur Orejime avec promesse onload, sans polling"
 
 ---
 
-### Tâche 4 : Trackers conditionnels
+### Task 4 — Trackers conditionnels
 
 **Fichiers :**
 - Créer : `src/core/trackers.ts`
@@ -872,7 +872,7 @@ git commit -m "feat(core): chargement différé GTM et Smartlook conditionné au
 
 ---
 
-### Tâche 5 : Badge RGPD
+### Task 5 — Badge RGPD
 
 Le badge remplace la bannière intrusive par un encart qui apparaît au défilement vers le haut. C'est ici que se corrige l'asymétrie accepter/refuser relevée au constat 4 de la spec.
 
@@ -1100,7 +1100,7 @@ git commit -m "feat(core): badge RGPD avec refus en un clic"
 
 ---
 
-### Tâche 6 : Correctifs d'accessibilité et animations
+### Task 6 — Correctifs d'accessibilité et animations
 
 **Fichiers :**
 - Créer : `src/core/a11y.ts`
@@ -1235,7 +1235,7 @@ git commit -m "feat(core): correctif H1 dupliqué et animations de sortie"
 
 ---
 
-### Tâche 7 : Orchestration et API inerte
+### Task 7 — Orchestration et API inerte
 
 C'est la tâche qui garantit qu'un module de consentement ne casse jamais son site hôte.
 
@@ -1442,7 +1442,7 @@ git commit -m "feat(core): initConsent et API inerte en cas d'échec"
 
 ---
 
-### Tâche 8 : Thème tokenisé
+### Task 8 — Thème tokenisé
 
 Portage du thème existant en séparant structure et couleurs. Fichier source : `public/orejime/orejime-overrides.css` du repo `getup-2K26` (629 lignes — la version PrestaShop, plus courte de 172 lignes, est obsolète et ne doit pas servir de base).
 
@@ -1538,7 +1538,7 @@ git commit -m "feat(theme): tokenisation complète, midnight-emerald en preset"
 
 ---
 
-### Tâche 9 : Wrapper React
+### Task 9 — Wrapper React
 
 **Fichiers :**
 - Créer : `src/react/ConsentManager.tsx`, `src/react/index.ts`
@@ -1644,7 +1644,7 @@ git commit -m "feat(react): composant ConsentManager"
 
 ---
 
-### Tâche 10 : Build et bundle IIFE
+### Task 10 — Build et bundle IIFE
 
 Les adaptateurs PHP ne peuvent pas consommer d'ESM : il leur faut un fichier unique à charger par `<script>`.
 
@@ -1729,7 +1729,7 @@ git commit -m "build: bundles ESM, IIFE et copie des actifs Orejime"
 
 ---
 
-### Tâche 11 : Test de bout en bout — aucun tracker avant consentement
+### Task 11 — Test de bout en bout — aucun tracker avant consentement
 
 Le test prioritaire de la spec §9. Il vérifie le comportement réel du réseau, sans mock.
 
@@ -1892,7 +1892,7 @@ git commit -m "test(e2e): aucun tracker ne part avant consentement"
 
 ---
 
-### Tâche 12 : Adaptateur WordPress
+### Task 12 — Adaptateur WordPress
 
 Règle de frontière de la spec §3 : aucune logique de consentement en PHP. L'adaptateur construit un tableau de config et le sérialise. C'est tout.
 
@@ -2297,7 +2297,7 @@ git commit -m "feat(wordpress): adaptateur fin, sérialisation JSON et migration
 
 ---
 
-### Tâche 13 : Adaptateur PrestaShop
+### Task 13 — Adaptateur PrestaShop
 
 Même règle de frontière. Les clients PrestaShop reçoivent à cette occasion le badge RGPD, absent de leur thème depuis l'origine (spec §1, constat 2).
 
@@ -2474,7 +2474,7 @@ git commit -m "feat(prestashop): adaptateur fin, badge RGPD enfin livré"
 
 ---
 
-### Tâche 14 : Zips de release et publication
+### Task 14 — Zips de release et publication
 
 **Fichiers :**
 - Créer : `scripts/build-zips.mjs`, `.github/workflows/release.yml`, `NOTICE`
