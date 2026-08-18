@@ -6,11 +6,11 @@ import type { OrejimeManager } from './loader';
 function fakeManager(confirmed = false) {
   const consent: Record<string, boolean> = { analytics: false, advertising: false };
   return {
-    confirmed,
-    purposes: [{ id: 'analytics' }, { id: 'advertising' }],
+    // Le vrai manager Orejime n'a pas de champ `confirmed` : `isDirty()`
+    // reste `true` tant que rien n'a été décidé.
+    isDirty: () => !confirmed,
     getConsent: (id: string) => consent[id],
     setConsent: vi.fn((id: string, v: boolean) => { consent[id] = v; }),
-    saveAndApplyConsents: vi.fn(),
     on: vi.fn(),
     consent
   } as unknown as OrejimeManager & { consent: Record<string, boolean> };
@@ -53,7 +53,6 @@ describe('mountBadge', () => {
     btn('accept').click();
     expect(m.setConsent).toHaveBeenCalledWith('analytics', true);
     expect(m.setConsent).toHaveBeenCalledWith('advertising', true);
-    expect(m.saveAndApplyConsents).toHaveBeenCalled();
   });
 
   it('refuse toutes les finalités en un clic', () => {
@@ -62,7 +61,6 @@ describe('mountBadge', () => {
     btn('decline').click();
     expect(m.setConsent).toHaveBeenCalledWith('analytics', false);
     expect(m.setConsent).toHaveBeenCalledWith('advertising', false);
-    expect(m.saveAndApplyConsents).toHaveBeenCalled();
   });
 
   it('ouvre la bannière complète depuis « En savoir plus »', () => {

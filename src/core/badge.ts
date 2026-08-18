@@ -17,10 +17,13 @@ function button(mod: string, label: string): HTMLButtonElement {
 }
 
 export function mountBadge(
-  _config: ResolvedConfig,
+  config: ResolvedConfig,
   manager: OrejimeManager
 ): { destroy(): void } {
-  if (manager.confirmed) return { destroy() {} };
+  // Le vrai manager Orejime n'expose pas de champ `confirmed` : `isDirty()`
+  // reste `true` tant qu'il existe des finalités non explicitement
+  // décidées, ce qui équivaut à « pas encore confirmé ».
+  if (!manager.isDirty()) return { destroy() {} };
 
   const root = document.createElement('div');
   root.className = 'getup-rgpd-badge';
@@ -78,8 +81,10 @@ export function mountBadge(
   };
 
   const setAll = (value: boolean) => {
-    manager.purposes.forEach((p) => manager.setConsent(p.id, value));
-    manager.saveAndApplyConsents();
+    // `manager.setConsent` persiste et applique déjà les conséquences en
+    // interne sur le vrai manager Orejime — voir le commentaire sur
+    // `OrejimeManager` dans loader.ts.
+    config.purposes.forEach((p) => manager.setConsent(p.id, value));
     remove();
   };
 

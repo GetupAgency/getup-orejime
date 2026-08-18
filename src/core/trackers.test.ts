@@ -6,11 +6,9 @@ import type { OrejimeManager } from './loader';
 function fakeManager(consent: Record<string, boolean>): OrejimeManager & { fire(): void } {
   const listeners: (() => void)[] = [];
   return {
-    confirmed: false,
-    purposes: Object.keys(consent).map((id) => ({ id })),
+    isDirty: () => true,
     getConsent: (id) => consent[id] ?? false,
     setConsent: (id, v) => { consent[id] = v; },
-    saveAndApplyConsents: () => {},
     on: (_e, cb) => { listeners.push(cb); },
     fire: () => listeners.forEach((l) => l())
   };

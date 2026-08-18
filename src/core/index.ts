@@ -23,8 +23,8 @@ const INERT: ConsentApi = {
   openBanner: () => {}
 };
 
-function readState(manager: OrejimeManager): Record<string, boolean> {
-  return Object.fromEntries(manager.purposes.map((p) => [p.id, manager.getConsent(p.id)]));
+function readState(manager: OrejimeManager, purposeIds: string[]): Record<string, boolean> {
+  return Object.fromEntries(purposeIds.map((id) => [id, manager.getConsent(id)]));
 }
 
 /**
@@ -35,21 +35,15 @@ function readState(manager: OrejimeManager): Record<string, boolean> {
  * le site hôte, ce qui viole la contrainte « ne jamais casser le site
  * hôte ».
  *
- * `confirmed` et `purposes` sont exposés via des accesseurs (et non copiés)
- * pour ne jamais figer un instantané au moment de l'enveloppement — le
- * badge, par exemple, lit `confirmed` pour décider de se monter ou non.
+ * `isDirty` est exposé via un accesseur (et non copié) pour ne jamais
+ * figer un instantané au moment de l'enveloppement — le badge, par
+ * exemple, l'appelle pour décider de se monter ou non.
  */
 function guardManager(manager: OrejimeManager): OrejimeManager {
   return {
-    get confirmed() {
-      return manager.confirmed;
-    },
-    get purposes() {
-      return manager.purposes;
-    },
     getConsent: (id) => manager.getConsent(id),
     setConsent: (id, v) => manager.setConsent(id, v),
-    saveAndApplyConsents: () => manager.saveAndApplyConsents(),
+    isDirty: () => manager.isDirty(),
     on: (event, cb) =>
       manager.on(event, () => {
         try {
@@ -69,7 +63,8 @@ export async function initConsent(input: ConsentConfig): Promise<ConsentApi> {
     const { manager: rawManager } = await loadOrejime(config);
     const manager = guardManager(rawManager);
 
-    const sync = () => pushConsentUpdate(config, readState(manager));
+    const purposeIds = config.purposes.map((p) => p.id);
+    const sync = () => pushConsentUpdate(config, readState(manager, purposeIds));
     sync();
     manager.on('update', sync);
 
@@ -78,18 +73,18 @@ export async function initConsent(input: ConsentConfig): Promise<ConsentApi> {
     if (config.ui.exitAnimation) attachExitAnimations();
     if (config.ui.badge) mountBadge(config, manager);
 
+    // `manager.setConsent` persiste et applique déjà les conséquences
+    // (cookies purgés, événement `update` émis) en interne — voir le
+    // commentaire sur `OrejimeManager` dans loader.ts. Aucune étape de
+    // sauvegarde séparée n'existe sur le vrai manager Orejime.
     const setAll = (value: boolean) => {
-      manager.purposes.forEach((p) => manager.setConsent(p.id, value));
-      manager.saveAndApplyConsents();
+      purposeIds.forEach((id) => manager.setConsent(id, value));
     };
 
     return {
       isInert: false,
       getConsent: (id) => manager.getConsent(id),
-      setConsent: (id, v) => {
-        manager.setConsent(id, v);
-        manager.saveAndApplyConsents();
-      },
+      setConsent: (id, v) => manager.setConsent(id, v),
       acceptAll: () => setAll(true),
       declineAll: () => setAll(false),
       openBanner: () => {

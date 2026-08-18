@@ -21,11 +21,9 @@ function resolveScript(manager: unknown) {
 }
 
 const stubManager = () => ({
-  confirmed: true,
-  purposes: [{ id: 'analytics' }],
+  isDirty: vi.fn(() => false),
   getConsent: vi.fn(() => true),
   setConsent: vi.fn(),
-  saveAndApplyConsents: vi.fn(),
   on: vi.fn()
 });
 
@@ -38,7 +36,6 @@ describe('initConsent', () => {
     expect(api.isInert).toBe(false);
     api.acceptAll();
     expect(m.setConsent).toHaveBeenCalledWith('analytics', true);
-    expect(m.saveAndApplyConsents).toHaveBeenCalled();
   });
 
   it('retourne une API inerte si le script échoue, sans rejeter', async () => {
@@ -93,11 +90,9 @@ describe('initConsent', () => {
       .mockImplementation(() => { throw new Error('boom'); });
 
     const m = {
-      confirmed: true,
-      purposes: [{ id: 'analytics' }],
+      isDirty: vi.fn(() => false),
       getConsent,
       setConsent: vi.fn(),
-      saveAndApplyConsents: vi.fn(),
       on: vi.fn()
     };
     resolveScript(m);
@@ -118,7 +113,6 @@ describe('initConsent', () => {
     // Le reste du module (l'API publique) reste utilisable après le throw.
     expect(() => api.acceptAll()).not.toThrow();
     expect(m.setConsent).toHaveBeenCalledWith('analytics', true);
-    expect(m.saveAndApplyConsents).toHaveBeenCalled();
 
     err.mockRestore();
   });
