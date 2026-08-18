@@ -1,4 +1,5 @@
 import { CONSENT_SIGNALS, type ConsentSignal, type ResolvedConfig } from './config';
+import { gtag } from './gtag';
 
 type SignalState = Record<ConsentSignal, 'granted' | 'denied'>;
 
@@ -30,11 +31,17 @@ export function consentDefaultsScript(_config: ResolvedConfig): string {
   );
 }
 
+/**
+ * Phase 2 — pousse l'état de consentement courant vers Consent Mode.
+ *
+ * Passe par le helper `gtag()` (objet `arguments`) et non par un
+ * `dataLayer.push([...])` : un `Array` n'est jamais dispatché comme commande
+ * par `gtag.js`, l'`update` n'atteindrait donc jamais Google. Voir
+ * src/core/gtag.ts.
+ */
 export function pushConsentUpdate(
   config: ResolvedConfig,
   state: Record<string, boolean>
 ): void {
-  const w = window as unknown as { dataLayer?: unknown[] };
-  w.dataLayer = w.dataLayer || [];
-  w.dataLayer.push(['consent', 'update', mapConsentState(config, state)]);
+  gtag('consent', 'update', mapConsentState(config, state));
 }

@@ -176,6 +176,34 @@ describe('attachTrackers', () => {
     expect(srcs().filter((s) => s.includes('googletagmanager'))).toHaveLength(1);
   });
 
+  /**
+   * `gtag.js` ne dispatche `js` et `config` que sous forme d'objet
+   * `arguments` : empilés en `Array`, ils sont traités comme de simples
+   * événements de data layer et GA4 n'est jamais configuré. Assertion sur la
+   * nature de l'entrée, pas seulement sur son contenu.
+   */
+  it('empile js et config sous forme dobjets arguments, jamais dArray', () => {
+    (window as any).dataLayer = [];
+    const eager = resolveConfig({
+      privacyPolicyUrl: '/c',
+      trackers: { gtm: { id: 'G-TEST', lazy: false } },
+      purposes: [{ id: 'analytics', title: 'A', description: 'd', cookies: [], default: false }]
+    });
+    attachTrackers(eager, fakeManager({ analytics: true }));
+
+    const dl = (window as any).dataLayer as IArguments[];
+    const isArgumentsObject = (v: unknown) =>
+      Object.prototype.toString.call(v) === '[object Arguments]';
+
+    expect(dl).toHaveLength(2);
+    expect(dl.every(isArgumentsObject)).toBe(true);
+    expect(dl.some(Array.isArray)).toBe(false);
+    expect(dl[0][0]).toBe('js');
+    expect(dl[0][1]).toBeInstanceOf(Date);
+    expect(dl[1][0]).toBe('config');
+    expect(dl[1][1]).toBe('G-TEST');
+  });
+
   it('ne charge rien si aucun tracker nest configuré', () => {
     const bare = resolveConfig({
       privacyPolicyUrl: '/c',

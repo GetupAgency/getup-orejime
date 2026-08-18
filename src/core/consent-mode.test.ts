@@ -69,6 +69,18 @@ describe('mapConsentState', () => {
   });
 });
 
+/**
+ * `gtag.js` ne dispatche une commande que depuis sa branche « arguments »
+ * (`Object.prototype.toString.call(a) === "[object Arguments]"` ou présence
+ * d'un `callee` propre). Un `Array` empilé dans `dataLayer` n'atteint jamais
+ * le registre de commandes : Google n'enregistre alors jamais l'accord du
+ * visiteur. Ces tests assertent donc la *nature* de l'entrée empilée, pas
+ * seulement son contenu — c'est l'assertion manquante qui a laissé passer la
+ * régression.
+ */
+const isArgumentsObject = (v: unknown): boolean =>
+  Object.prototype.toString.call(v) === '[object Arguments]';
+
 describe('pushConsentUpdate', () => {
   beforeEach(() => { (window as any).dataLayer = []; });
 
@@ -80,9 +92,18 @@ describe('pushConsentUpdate', () => {
     expect(dl[0][2].analytics_storage).toBe('granted');
   });
 
+  it('empile un objet arguments — seule forme que gtag.js dispatche', () => {
+    pushConsentUpdate(config, { analytics: true, advertising: false });
+    const entry = (window as any).dataLayer[0];
+    expect(isArgumentsObject(entry)).toBe(true);
+    expect(Array.isArray(entry)).toBe(false);
+    expect(entry.length).toBe(3);
+  });
+
   it('traite null sans lever (tout refusé)', () => {
     pushConsentUpdate(config, null as any);
     const dl = (window as any).dataLayer;
+    expect(isArgumentsObject(dl[0])).toBe(true);
     expect(dl[0][0]).toBe('consent');
     expect(Object.values(dl[0][2]).every((v) => v === 'denied')).toBe(true);
   });
@@ -90,6 +111,7 @@ describe('pushConsentUpdate', () => {
   it('traite undefined sans lever (tout refusé)', () => {
     pushConsentUpdate(config, undefined as any);
     const dl = (window as any).dataLayer;
+    expect(isArgumentsObject(dl[0])).toBe(true);
     expect(dl[0][0]).toBe('consent');
     expect(Object.values(dl[0][2]).every((v) => v === 'denied')).toBe(true);
   });

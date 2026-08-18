@@ -1,5 +1,6 @@
 import type { ResolvedConfig } from './config';
 import type { OrejimeManager } from './loader';
+import { gtag } from './gtag';
 
 const INTERACTIONS = ['scroll', 'click', 'touchstart', 'keydown'] as const;
 
@@ -49,10 +50,10 @@ function attachGtm(id: string, lazy: boolean, manager: OrejimeManager): void {
     if (loaded || !manager.getConsent('analytics')) return;
     loaded = true;
     injectScript(`https://www.googletagmanager.com/gtag/js?id=${id}`);
-    const w = window as unknown as { dataLayer?: unknown[] };
-    w.dataLayer = w.dataLayer || [];
-    w.dataLayer.push(['js', new Date()]);
-    w.dataLayer.push(['config', id]);
+    // Objet `arguments` obligatoire : `gtag.js` ignore les commandes empilées
+    // sous forme d'Array, GA4 ne serait alors jamais configuré (src/core/gtag.ts).
+    gtag('js', new Date());
+    gtag('config', id);
     INTERACTIONS.forEach((e) => document.removeEventListener(e, load, true));
   };
 
