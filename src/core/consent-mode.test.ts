@@ -24,7 +24,7 @@ describe('consentDefaultsScript', () => {
       privacyPolicyUrl: '/c',
       purposes: [{
         id: 'analytics', title: 'A', description: 'd', cookies: [],
-        default: true as unknown as false, unsafeDefaultOptIn: true
+        default: true as unknown as false, unsafeDefaultGranted: true
       }]
     });
     expect(consentDefaultsScript(optIn)).not.toContain('granted');

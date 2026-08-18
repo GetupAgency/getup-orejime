@@ -24,14 +24,14 @@ describe('resolveConfig', () => {
     expect(() => resolveConfig({ ...base, purposes: [] })).toThrow(/purposes/);
   });
 
-  it('force default à false quand unsafeDefaultOptIn est absent', () => {
+  it('force default à false quand unsafeDefaultGranted est absent', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const c = resolveConfig({
       ...base,
       purposes: [{ ...base.purposes[0], default: true as unknown as false }]
     });
     expect(c.purposes[0].default).toBe(false);
-    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/unsafeDefaultOptIn/));
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/unsafeDefaultGranted/));
     warn.mockRestore();
   });
 
@@ -39,7 +39,7 @@ describe('resolveConfig', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const c = resolveConfig({
       ...base,
-      purposes: [{ ...base.purposes[0], default: true as unknown as false, unsafeDefaultOptIn: true }]
+      purposes: [{ ...base.purposes[0], default: true as unknown as false, unsafeDefaultGranted: true }]
     });
     expect(c.purposes[0].default).toBe(true);
     expect(warn).toHaveBeenCalledWith(expect.stringMatching(/opt-in/i));

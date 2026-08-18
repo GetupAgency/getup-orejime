@@ -19,7 +19,8 @@ Ces quatre points sont des obligations, pas des choix d'implémentation. Ils son
 tenus par des tests, et la CI échoue si l'un d'eux cède.
 
 - **Aucune finalité non essentielle n'est accordée par défaut.** `Purpose.default`
-  est typé littéral `false` ; l'opt-in exige un `unsafeDefaultOptIn` explicite et
+  est typé littéral `false` ; pré-accorder une finalité exige un
+  `unsafeDefaultGranted` explicite et
   déclenche un avertissement console.
 - **Consent Mode v2 refuse les quatre signaux par défaut**, de façon synchrone
   dans le `<head>`, avant toute balise. Non paramétrable.

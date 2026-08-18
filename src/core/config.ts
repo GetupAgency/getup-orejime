@@ -21,7 +21,15 @@ export type Purpose = {
   description: string;
   cookies: (string | RegExp)[];
   default: false;
-  unsafeDefaultOptIn?: true;
+  /**
+   * Pré-accorde la finalité, c'est-à-dire la place en opt-OUT : le visiteur
+   * est pisté tant qu'il n'a pas refusé. Nommé « granted » et non « optIn » à
+   * dessein — en droit, « opt-in » désigne l'inverse, le consentement requis
+   * avant activation, et c'est ce sens qu'emploie la notice d'administration
+   * WordPress. Deux sens opposés du même mot dans un module de conformité
+   * étaient une invitation à l'erreur.
+   */
+  unsafeDefaultGranted?: true;
 };
 
 export type ConsentConfig = {
@@ -115,10 +123,10 @@ export function resolveConfig(input: ConsentConfig): ResolvedConfig {
 
   const purposes = input.purposes.map((p) => {
     const wantsOptIn = (p as { default: boolean }).default === true;
-    if (wantsOptIn && !p.unsafeDefaultOptIn) {
+    if (wantsOptIn && !p.unsafeDefaultGranted) {
       console.warn(
         `[getup-consent] La finalité "${p.id}" est déclarée default: true sans ` +
-        `unsafeDefaultOptIn. Valeur forcée à false : un consentement préalable est requis.`
+        `unsafeDefaultGranted. Valeur forcée à false : un consentement préalable est requis.`
       );
       return { ...p, default: false };
     }
