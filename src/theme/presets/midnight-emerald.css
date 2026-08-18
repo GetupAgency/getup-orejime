@@ -1,0 +1,28 @@
+:root {
+  --orejime-color-background: #101820;
+  --orejime-color-surface: #0a0f14;
+  --orejime-color-text: #f0f4f3;
+  --orejime-color-text-muted: #a3b3ad;
+  --orejime-color-subdued: #7e9189;
+  --orejime-color-border: #3f4f49;
+  --orejime-color-border-strong: #5e726b;
+  --orejime-color-interactive: #10b981;
+  --orejime-color-interactive-hover: #34d399;
+  --orejime-color-interactive-active: #059669;
+  --orejime-color-on-interactive: #0a0f14;
+  --orejime-color-on-light: #fff;
+  --orejime-color-shadow: 0, 0, 0;
+  --orejime-color-backdrop: rgba(6, 11, 16, 0.8);
+
+  /* Raw R,G,B triplets — for alpha-blended uses (box-shadow washes,
+     hairline borders, hover tints) where tokens.css needs the base
+     colour above at a variable opacity via rgba(var(--…-rgb), alpha).
+     Keep each triplet in sync with its hex counterpart above. */
+  --orejime-color-interactive-rgb: 16, 185, 129;
+  --orejime-color-text-rgb: 240, 244, 243;
+  --orejime-color-background-rgb: 16, 24, 32;
+  --orejime-font-family: var(--font-inter), 'Inter', -apple-system, sans-serif;
+  --orejime-radius: 16px;
+  --orejime-space-m: 1.25em;
+  --orejime-font-size-small: 0.8rem;
+}
