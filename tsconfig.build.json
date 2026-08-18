@@ -1,3 +1,12 @@
+// Emits .d.ts for the public entry points, run separately from tsup
+// (`tsc -p tsconfig.build.json` in the "build" script). tsup's own
+// `dts: true` crashes: rollup-plugin-dts needs the classic TS Compiler API
+// (`ts.sys`), which typescript@7 (native/Go port) no longer ships. Output
+// is unbundled per-file declarations (relative imports between them), not
+// the single rolled-up file `dts: true` would have produced — both work
+// for consumers since all of dist/ is published, but keep this in mind if
+// tsup's dts generation ever becomes usable again and someone is tempted
+// to switch back.
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
