@@ -19,7 +19,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "rm -rf dist && tsup && tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest"
   },
