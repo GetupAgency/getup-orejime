@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fixture consentement</title>
+    <script type="application/json" id="getup-consent-config">
+      {
+        "privacyPolicyUrl": "/confidentialite",
+        "assetsBaseUrl": "/vendor/orejime",
+        "trackers": {
+          "gtm": { "id": "G-FIXTURE", "lazy": false },
+          "smartlook": { "key": "fixture-key" }
+        },
+        "purposes": [
+          { "id": "analytics", "title": "Analytics", "description": "d", "cookies": ["_ga"], "default": false },
+          { "id": "advertising", "title": "Publicité", "description": "d", "cookies": ["_fbp"], "default": false }
+        ]
+      }
+    </script>
+    <link rel="stylesheet" href="/theme/tokens.css" />
+    <link rel="stylesheet" href="/theme/presets/midnight-emerald.css" />
+    <script src="/getup-consent.iife.js" defer></script>
+  </head>
+  <body style="height: 300vh">
+    <h1>Fixture</h1>
+  </body>
+</html>

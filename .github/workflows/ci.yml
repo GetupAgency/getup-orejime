@@ -9,3 +9,10 @@ jobs:
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
       - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: |
+          rm -rf .playwright-root && mkdir -p .playwright-root
+          cp -R dist/* .playwright-root/
+          cp e2e/fixture/index.html .playwright-root/index.html
+      - run: npx playwright test
