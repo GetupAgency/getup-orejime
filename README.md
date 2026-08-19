@@ -36,10 +36,15 @@ avant consentement, aucune après un refus, les deux après une acceptation.
 ## Installation
 
 ```bash
-npm i github:GetupAgency/getup-orejime#main   # #v2.0.0 une fois le tag posé
+npm i github:GetupAgency/getup-orejime#v2.0.0
 ```
 
 npm exécute `prepare`, qui construit `dist/`. Aucun registre, aucun compte.
+
+Le dépôt est public : l'installation fonctionne sans identifiant, y compris
+dans un runner de CI ou un conteneur de build. npm inscrit l'URL en
+`git+ssh://` dans le lock — c'est sa forme canonique pour GitHub — et bascule
+sur https quand aucune clé SSH n'est disponible.
 
 ### Actifs statiques
 
